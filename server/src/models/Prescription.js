@@ -76,3 +76,4 @@ prescriptionSchema.index({ status: 1 });
 prescriptionSchema.index({ issueDate: -1 });
 
 module.exports = mongoose.model('Prescription', prescriptionSchema);
+// Commit on 2024-06-1 at 9:24

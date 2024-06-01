@@ -267,3 +267,4 @@ export default function InventoryPage() {
     </AppLayout>
   );
 }
+// Commit on 2024-06-1 at 14:11

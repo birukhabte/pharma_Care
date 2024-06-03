@@ -118,3 +118,4 @@ router.patch('/:id/loyalty', authenticate, async (req, res) => {
 });
 
 module.exports = router;
+// Commit on 2024-06-3 at 12:34

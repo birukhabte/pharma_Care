@@ -72,3 +72,4 @@ const medicineSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Medicine', medicineSchema);
+// Commit on 2024-06-3 at 9:52

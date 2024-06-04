@@ -80,3 +80,4 @@ supplierSchema.index({ status: 1 });
 module.exports = mongoose.model('Supplier', supplierSchema);
 // Commit on 2024-06-16 at 17:3
 // Commit on 2024-06-17 at 9:0
+// Commit on 2024-06-4 at 18:20

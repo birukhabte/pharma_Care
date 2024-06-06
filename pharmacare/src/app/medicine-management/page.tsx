@@ -8,4 +8,4 @@ export default function MedicineManagementPage() {
       <MedicineTable />
     </AppLayout>
   );
-}
+}// Commit on 2024-06-6 at 11:35

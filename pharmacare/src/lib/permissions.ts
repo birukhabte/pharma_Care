@@ -113,3 +113,4 @@ export const usePermissions = () => {
     hasPermission: (resource: Resource, action: Action) => role ? hasPermission(role, resource, action) : false,
   };
 };
+// Commit on 2024-06-8 at 9:26

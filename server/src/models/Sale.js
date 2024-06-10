@@ -37,3 +37,4 @@ const saleSchema = new mongoose.Schema({
 
 module.exports = mongoose.model('Sale', saleSchema);
 // Commit on 2024-06-6 at 15:33
+// Commit on 2024-06-10 at 15:57

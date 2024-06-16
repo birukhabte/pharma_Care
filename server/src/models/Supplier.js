@@ -78,3 +78,4 @@ supplierSchema.index({ category: 1 });
 supplierSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Supplier', supplierSchema);
+// Commit on 2024-06-16 at 17:3

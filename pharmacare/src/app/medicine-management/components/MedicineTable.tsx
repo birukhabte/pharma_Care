@@ -485,9 +485,9 @@ export default function MedicineTable() {
       toast.success(`${data.name} updated successfully`);
     } else {
       const newMed: Medicine = {
+        ...(data as Medicine),
         id: `med-${Date.now()}`,
         batchCount: 0,
-        ...(data as Medicine),
       };
       setMedicines((prev) => [newMed, ...prev]);
       // TODO: POST /api/medicines with data

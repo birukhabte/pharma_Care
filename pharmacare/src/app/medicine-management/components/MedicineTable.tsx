@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Search, Plus, Filter, ChevronUp, ChevronDown, ChevronsUpDown, Eye, Pencil, Trash2, Package, Columns, Check, X, ChevronLeft, ChevronRight, AlertTriangle,  } from 'lucide-react';
 import AddMedicineModal from './AddMedicineModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import StatusChangeDropdown from './StatusChangeDropdown';
+import { api } from '@/lib/api';
 
 export interface Medicine {
   id: string;
@@ -353,7 +354,8 @@ function StockBar({ qty, reorder }: { qty: number; reorder: number }) {
 }
 
 export default function MedicineTable() {
-  const [medicines, setMedicines] = useState<Medicine[]>(MOCK_MEDICINES);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -371,6 +373,22 @@ export default function MedicineTable() {
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Medicine | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    loadMedicines();
+  }, []);
+
+  const loadMedicines = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getMedicines();
+      setMedicines(data.map((m: any) => ({ ...m, id: m._id })));
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to load medicines');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = [...medicines];
@@ -451,50 +469,61 @@ export default function MedicineTable() {
     });
   };
 
-  const handleStatusChange = (id: string, status: Medicine['status']) => {
-    setMedicines((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
-    // TODO: PATCH /api/medicines/:id with { status }
-    toast.success(`Status updated to "${status.replace('_', ' ')}"`);
+  const handleStatusChange = async (id: string, status: Medicine['status']) => {
+    try {
+      await api.patchMedicine(id, { status });
+      setMedicines((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
+      toast.success(`Status updated to "${status.replace('_', ' ')}"`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update status');
+    }
   };
 
   const handleDelete = (medicine: Medicine) => {
     setDeleteTarget(medicine);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
-    setMedicines((prev) => prev.filter((m) => m.id !== deleteTarget.id));
-    // TODO: DELETE /api/medicines/:id
-    toast.success(`${deleteTarget.name} removed from inventory`);
-    setDeleteTarget(null);
-  };
-
-  const handleBulkDelete = () => {
-    setMedicines((prev) => prev.filter((m) => !selectedRows.has(m.id)));
-    // TODO: DELETE /api/medicines/bulk with { ids: [...selectedRows] }
-    toast.success(`${selectedRows.size} medicines removed`);
-    setSelectedRows(new Set());
-  };
-
-  const handleAddOrEdit = (data: Partial<Medicine>) => {
-    if (editingMedicine) {
-      setMedicines((prev) =>
-        prev.map((m) => (m.id === editingMedicine.id ? { ...m, ...data } : m))
-      );
-      // TODO: PUT /api/medicines/:id with data
-      toast.success(`${data.name} updated successfully`);
-    } else {
-      const newMed: Medicine = {
-        ...(data as Medicine),
-        id: `med-${Date.now()}`,
-        batchCount: 0,
-      };
-      setMedicines((prev) => [newMed, ...prev]);
-      // TODO: POST /api/medicines with data
-      toast.success(`${data.name} added to inventory`);
+    try {
+      await api.deleteMedicine(deleteTarget.id);
+      setMedicines((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+      toast.success(`${deleteTarget.name} removed from inventory`);
+      setDeleteTarget(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete medicine');
     }
-    setAddModalOpen(false);
-    setEditingMedicine(null);
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await api.bulkDeleteMedicines([...selectedRows]);
+      setMedicines((prev) => prev.filter((m) => !selectedRows.has(m.id)));
+      toast.success(`${selectedRows.size} medicines removed`);
+      setSelectedRows(new Set());
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete medicines');
+    }
+  };
+
+  const handleAddOrEdit = async (data: Partial<Medicine>) => {
+    try {
+      if (editingMedicine) {
+        await api.updateMedicine(editingMedicine.id, data);
+        setMedicines((prev) =>
+          prev.map((m) => (m.id === editingMedicine.id ? { ...m, ...data } : m))
+        );
+        toast.success(`${data.name} updated successfully`);
+      } else {
+        const newMed = await api.createMedicine(data);
+        setMedicines((prev) => [{ ...newMed, id: newMed._id }, ...prev]);
+        toast.success(`${data.name} added to inventory`);
+      }
+      setAddModalOpen(false);
+      setEditingMedicine(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Operation failed');
+    }
   };
 
   const toggleColumn = (colId: string) => {

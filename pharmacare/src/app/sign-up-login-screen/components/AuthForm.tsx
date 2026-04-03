@@ -101,19 +101,18 @@ export default function AuthForm() {
   });
 
   const handleLoginSubmit = async (data: LoginFormData) => {
-    const valid = demoCredentials.find(
-      (c) => c.email === data.email && c.password === data.password
-    );
-    if (!valid) {
-      toast.error('Invalid credentials — use the demo accounts below to sign in');
-      return;
-    }
     setIsLoading(true);
-    // TODO: POST /api/auth/login with { email, password }
-    await new Promise((r) => setTimeout(r, 1200));
-    setIsLoading(false);
-    toast.success(`Welcome back, ${valid.role}!`);
-    router.push('/dashboard');
+    try {
+      const { api } = await import('@/lib/api');
+      await api.login(data.email, data.password);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      toast.success(`Welcome back, ${user.fullName}!`);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid credentials');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRegisterSubmit = async (data: RegisterFormData) => {
@@ -122,11 +121,22 @@ export default function AuthForm() {
       return;
     }
     setIsLoading(true);
-    // TODO: POST /api/auth/register with registration payload
-    await new Promise((r) => setTimeout(r, 1400));
-    setIsLoading(false);
-    toast.success('Account created! Please sign in.');
-    setActiveTab('login');
+    try {
+      const { api } = await import('@/lib/api');
+      await api.register({
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
+        pharmacyName: data.pharmacyName,
+        role: data.role,
+      });
+      toast.success('Account created successfully!');
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fillCredentials = (cred: (typeof demoCredentials)[0]) => {

@@ -136,9 +136,17 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
         {/* User avatar */}
         <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
           <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center">
-            <span className="text-xs font-semibold text-teal-700">RP</span>
+            <span className="text-xs font-semibold text-teal-700">
+              {typeof window !== 'undefined' && localStorage.getItem('user') 
+                ? JSON.parse(localStorage.getItem('user') || '{}').fullName?.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+                : 'RP'}
+            </span>
           </div>
-          <span className="hidden md:block text-sm font-medium text-slate-700">Ravi Patel</span>
+          <span className="hidden md:block text-sm font-medium text-slate-700">
+            {typeof window !== 'undefined' && localStorage.getItem('user')
+              ? JSON.parse(localStorage.getItem('user') || '{}').fullName
+              : 'Ravi Patel'}
+          </span>
           <ChevronDown size={14} className="hidden md:block text-slate-400" />
         </button>
       </div>

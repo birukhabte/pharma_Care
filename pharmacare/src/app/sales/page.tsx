@@ -150,7 +150,7 @@ export default function SalesPage() {
                     <p className="text-xs text-slate-400 mb-2">{med.generic}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{med.category}</span>
-                      <span className="text-sm font-bold text-teal-700">₹{med.price.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-teal-700">Br {med.price.toFixed(2)}</span>
                     </div>
                     <p className="text-xs text-slate-400 mt-1.5">Stock: {med.stock} units</p>
                   </button>
@@ -201,7 +201,7 @@ export default function SalesPage() {
                   <div key={item.id} className="flex items-center gap-2 py-2 border-b border-slate-50 last:border-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-slate-800 truncate">{item.name}</p>
-                      <p className="text-xs text-slate-400">₹{item.price.toFixed(2)} each</p>
+                      <p className="text-xs text-slate-400">Br {item.price.toFixed(2)} each</p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -219,7 +219,7 @@ export default function SalesPage() {
                       </button>
                     </div>
                     <div className="text-right min-w-[48px]">
-                      <p className="text-xs font-semibold text-slate-800">₹{(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-xs font-semibold text-slate-800">Br {(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.id)}
@@ -236,7 +236,7 @@ export default function SalesPage() {
             <div className="border-t border-slate-100 px-4 py-3 space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+                <span>Br {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 flex-shrink-0">Discount</span>
@@ -250,12 +250,12 @@ export default function SalesPage() {
                 />
                 <span className="text-xs text-slate-400">%</span>
                 {discountAmount > 0 && (
-                  <span className="ml-auto text-xs text-emerald-600">-₹{discountAmount.toFixed(2)}</span>
+                  <span className="ml-auto text-xs text-emerald-600">-Br {discountAmount.toFixed(2)}</span>
                 )}
               </div>
               <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                 <span className="text-sm font-bold text-slate-800">Total</span>
-                <span className="text-base font-bold text-teal-700">₹{total.toFixed(2)}</span>
+                <span className="text-base font-bold text-teal-700">Br {total.toFixed(2)}</span>
               </div>
             </div>
 
@@ -287,7 +287,7 @@ export default function SalesPage() {
                 className="w-full py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <ShoppingCart size={16} />
-                Checkout · ₹{total.toFixed(2)}
+                Checkout · Br {total.toFixed(2)}
               </button>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function SalesPage() {
               <CheckCircle size={36} className="text-emerald-500" />
             </div>
             <h2 className="text-lg font-bold text-slate-800">Sale Completed!</h2>
-            <p className="text-sm text-slate-500">₹{total.toFixed(2)} received via {paymentMethod.toUpperCase()}</p>
+            <p className="text-sm text-slate-500">Br {total.toFixed(2)} received via {paymentMethod.toUpperCase()}</p>
           </div>
         </div>
       )}

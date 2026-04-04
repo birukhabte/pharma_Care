@@ -261,14 +261,15 @@ export default function AuthForm() {
                   <div className="relative">
                     <Mail
                       size={15}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
                     />
                     <input
                       type="email"
                       placeholder="ravi@pharmacare.in"
-                      className={`form-input pl-9 ${
+                      className={`form-input ${
                         loginForm.formState.errors.email ? 'form-input-error' : ''
                       }`}
+                      style={{ paddingLeft: '2.5rem' }}
                       {...loginForm.register('email', {
                         required: 'Email is required',
                         pattern: {
@@ -299,14 +300,15 @@ export default function AuthForm() {
                   <div className="relative">
                     <Lock
                       size={15}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
                     />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
-                      className={`form-input pl-9 pr-10 ${
+                      className={`form-input pr-10 ${
                         loginForm.formState.errors.password ? 'form-input-error' : ''
                       }`}
+                      style={{ paddingLeft: '2.5rem' }}
                       {...loginForm.register('password', {
                         required: 'Password is required',
                         minLength: { value: 6, message: 'Minimum 6 characters' },
@@ -416,11 +418,12 @@ export default function AuthForm() {
                   <div>
                     <label className="form-label">Full name</label>
                     <div className="relative">
-                      <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                       <input
                         type="text"
                         placeholder="Ravi Patel"
-                        className={`form-input pl-9 ${registerForm.formState.errors.fullName ? 'form-input-error' : ''}`}
+                        className={`form-input ${registerForm.formState.errors.fullName ? 'form-input-error' : ''}`}
+                        style={{ paddingLeft: '2.5rem' }}
                         {...registerForm.register('fullName', {
                           required: 'Full name is required',
                           minLength: { value: 2, message: 'At least 2 characters' },
@@ -436,11 +439,12 @@ export default function AuthForm() {
                   <div>
                     <label className="form-label">Pharmacy name</label>
                     <div className="relative">
-                      <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                       <input
                         type="text"
                         placeholder="City Pharmacy"
-                        className={`form-input pl-9 ${registerForm.formState.errors.pharmacyName ? 'form-input-error' : ''}`}
+                        className={`form-input ${registerForm.formState.errors.pharmacyName ? 'form-input-error' : ''}`}
+                        style={{ paddingLeft: '2.5rem' }}
                         {...registerForm.register('pharmacyName', {
                           required: 'Pharmacy name is required',
                         })}
@@ -481,11 +485,12 @@ export default function AuthForm() {
                 <div>
                   <label className="form-label">Work email</label>
                   <div className="relative">
-                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                     <input
                       type="email"
                       placeholder="ravi@citychemist.com"
-                      className={`form-input pl-9 ${registerForm.formState.errors.email ? 'form-input-error' : ''}`}
+                      className={`form-input ${registerForm.formState.errors.email ? 'form-input-error' : ''}`}
+                      style={{ paddingLeft: '2.5rem' }}
                       {...registerForm.register('email', {
                         required: 'Email is required',
                         pattern: {
@@ -507,11 +512,12 @@ export default function AuthForm() {
                     Minimum 8 characters, include a number and symbol
                   </p>
                   <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Create a strong password"
-                      className={`form-input pl-9 pr-10 ${registerForm.formState.errors.password ? 'form-input-error' : ''}`}
+                      className={`form-input pr-10 ${registerForm.formState.errors.password ? 'form-input-error' : ''}`}
+                      style={{ paddingLeft: '2.5rem' }}
                       {...registerForm.register('password', {
                         required: 'Password is required',
                         minLength: { value: 8, message: 'Minimum 8 characters' },
@@ -538,11 +544,12 @@ export default function AuthForm() {
                 <div>
                   <label className="form-label">Confirm password</label>
                   <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="Repeat your password"
-                      className={`form-input pl-9 pr-10 ${registerForm.formState.errors.confirmPassword ? 'form-input-error' : ''}`}
+                      className={`form-input pr-10 ${registerForm.formState.errors.confirmPassword ? 'form-input-error' : ''}`}
+                      style={{ paddingLeft: '2.5rem' }}
                       {...registerForm.register('confirmPassword', {
                         required: 'Please confirm your password',
                       })}

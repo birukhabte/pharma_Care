@@ -163,6 +163,13 @@ body {
   color: rgb(30 41 59);
   background-color: white;
   transition: all 150ms;
+  position: relative;
+  z-index: 1;
+}
+
+/* Input with left icon - add more padding */
+.form-input-with-icon {
+  padding-left: 2.75rem;
 }
 
 .form-input::placeholder {

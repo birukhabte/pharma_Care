@@ -64,13 +64,13 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   };
 
   const getUserInitials = () => {
-    if (!user?.fullName) return 'AB';
+    if (!user?.fullName) return 'AT';
     return user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase();
   };
 
-  const getUserName = () => user?.fullName || 'Abebe Bekele';
-  const getUserEmail = () => user?.email || 'abebe.bekele@pharmacare.et';
-  const getUserRole = () => user?.role?.replace('_', ' ') || 'Head Pharmacist';
+  const getUserName = () => user?.fullName || 'Alemayehu Tadesse';
+  const getUserEmail = () => user?.email || 'admin@pharmacare.et';
+  const getUserRole = () => user?.role?.replace('_', ' ') || 'Administrator';
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20">

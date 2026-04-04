@@ -40,17 +40,15 @@ type RegisterFormData = {
 };
 
 const demoCredentials = [
-  { role: 'Head Pharmacist', email: 'abebe.bekele@pharmacare.et', password: 'Pharma@2026' },
-  { role: 'Counter Staff', email: 'tigist.haile@pharmacare.et', password: 'Staff@2026' },
+  { role: 'Administrator', email: 'admin@pharmacare.et', password: 'Pharma@2026' },
+  { role: 'Pharmacist', email: 'tigist.haile@pharmacare.et', password: 'Staff@2026' },
   { role: 'Inventory Manager', email: 'dawit.tesfaye@pharmacare.et', password: 'Invent@2026' },
 ];
 
 const roleOptions = [
-  { value: 'head_pharmacist', label: 'Head Pharmacist' },
   { value: 'pharmacist', label: 'Pharmacist' },
-  { value: 'counter_staff', label: 'Counter Staff' },
   { value: 'inventory_manager', label: 'Inventory Manager' },
-  { value: 'admin', label: 'Pharmacy Admin' },
+  { value: 'admin', label: 'Administrator' },
 ];
 
 function CopyButton({ text }: { text: string }) {

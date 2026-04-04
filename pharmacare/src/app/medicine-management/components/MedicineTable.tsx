@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, Plus, Filter, ChevronUp, ChevronDown, ChevronsUpDown, Eye, Pencil, Trash2, Package, Columns, Check, X, ChevronLeft, ChevronRight, AlertTriangle,  } from 'lucide-react';
+import { Search, Plus, Filter, ChevronUp, ChevronDown, ChevronsUpDown, Eye, Pencil, Trash2, Package, Columns, Check, X, ChevronLeft, ChevronRight, AlertTriangle, Lock  } from 'lucide-react';
 import AddMedicineModal from './AddMedicineModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import StatusChangeDropdown from './StatusChangeDropdown';
 import { api } from '@/lib/api';
+import { canCreate, canUpdate, canDelete, getUserRole } from '@/lib/permissions';
 
 export interface Medicine {
   id: string;
@@ -356,6 +357,7 @@ function StockBar({ qty, reorder }: { qty: number; reorder: number }) {
 export default function MedicineTable() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -375,6 +377,7 @@ export default function MedicineTable() {
   const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
+    setUserRole(getUserRole());
     loadMedicines();
   }, []);
 
@@ -555,13 +558,24 @@ export default function MedicineTable() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button className="btn-secondary text-xs px-3 py-2">Import CSV</button>
-          <button
-            onClick={() => { setEditingMedicine(null); setAddModalOpen(true); }}
-            className="btn-primary flex items-center gap-1.5 text-xs px-3 py-2"
-          >
-            <Plus size={14} />
-            Add Medicine
-          </button>
+          {canCreate(userRole || '', 'medicines') ? (
+            <button
+              onClick={() => { setEditingMedicine(null); setAddModalOpen(true); }}
+              className="btn-primary flex items-center gap-1.5 text-xs px-3 py-2"
+            >
+              <Plus size={14} />
+              Add Medicine
+            </button>
+          ) : (
+            <button
+              disabled
+              title="You don't have permission to add medicines"
+              className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-2 opacity-50 cursor-not-allowed"
+            >
+              <Lock size={14} />
+              Add Medicine
+            </button>
+          )}
         </div>
       </div>
 
@@ -899,6 +913,11 @@ function MedicineRow({
   onStatusChange: (id: string, s: Medicine['status']) => void;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUserRole(getUserRole());
+  }, []);
 
   return (
     <tr
@@ -982,26 +1001,38 @@ function MedicineRow({
       {/* Actions */}
       <td className="table-cell text-right">
         <div className={`flex items-center justify-end gap-1 transition-opacity duration-150 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
-          <button
-            onClick={onEdit}
-            title="Edit medicine"
-            className="p-1.5 rounded-lg hover:bg-teal-50 text-slate-400 hover:text-teal-600 transition-colors"
-          >
-            <Pencil size={14} />
-          </button>
+          {canUpdate(userRole || '', 'medicines') && (
+            <button
+              onClick={onEdit}
+              title="Edit medicine"
+              className="p-1.5 rounded-lg hover:bg-teal-50 text-slate-400 hover:text-teal-600 transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
           <button
             title="View batches"
             className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
           >
             <Eye size={14} />
           </button>
-          <button
-            onClick={onDelete}
-            title="Delete medicine — this cannot be undone"
-            className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
-          >
-            <Trash2 size={14} />
-          </button>
+          {canDelete(userRole || '', 'medicines') ? (
+            <button
+              onClick={onDelete}
+              title="Delete medicine — this cannot be undone"
+              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          ) : (
+            <button
+              disabled
+              title="You don't have permission to delete medicines"
+              className="p-1.5 rounded-lg text-slate-300 cursor-not-allowed"
+            >
+              <Lock size={12} />
+            </button>
+          )}
         </div>
       </td>
     </tr>

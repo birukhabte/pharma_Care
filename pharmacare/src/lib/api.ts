@@ -33,6 +33,8 @@ class ApiClient {
     if (data.token) {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      // Set cookie for middleware
+      document.cookie = `auth_token=${data.token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
     }
     return data;
   }
@@ -51,6 +53,8 @@ class ApiClient {
     if (data.token) {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      // Set cookie for middleware
+      document.cookie = `auth_token=${data.token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
     }
     return data;
   }
@@ -58,6 +62,8 @@ class ApiClient {
   logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    // Clear cookie
+    document.cookie = 'auth_token=; path=/; max-age=0';
   }
 
   // Medicines

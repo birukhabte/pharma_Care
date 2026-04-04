@@ -25,17 +25,17 @@ const seedData = async () => {
     
     const users = await User.insertMany([
       {
-        email: 'abebe.bekele@pharmacare.et',
+        email: 'admin@pharmacare.et',
         password: hashedPassword,
-        fullName: 'Abebe Bekele',
-        role: 'head_pharmacist',
+        fullName: 'Alemayehu Tadesse',
+        role: 'admin',
         pharmacyName: 'PharmaCare Addis Ababa'
       },
       {
         email: 'tigist.haile@pharmacare.et',
         password: await bcrypt.hash('Staff@2026', 10),
         fullName: 'Tigist Haile',
-        role: 'counter_staff',
+        role: 'pharmacist',
         pharmacyName: 'PharmaCare Addis Ababa'
       },
       {
@@ -148,6 +148,10 @@ const seedData = async () => {
 
     console.log('Database seeded successfully!');
     console.log(`Created ${users.length} users`);
+    console.log('User accounts:');
+    console.log('  - admin@pharmacare.et (Admin) - Password: Pharma@2026');
+    console.log('  - tigist.haile@pharmacare.et (Pharmacist) - Password: Staff@2026');
+    console.log('  - dawit.tesfaye@pharmacare.et (Inventory Manager) - Password: Invent@2026');
     console.log(`Created ${medicines.length} medicines`);
     console.log('Created 2 sample sales');
     

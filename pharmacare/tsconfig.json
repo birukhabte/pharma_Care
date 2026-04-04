@@ -27,6 +27,9 @@
       ],
       "@/app/*": [
         "src/app/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
       ]
     },
     "plugins": [

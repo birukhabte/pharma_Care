@@ -6,17 +6,17 @@ import { ExternalLink, Receipt } from 'lucide-react';
 const recentSales = [
   {
     id: 'inv-20260402-0091',
-    customer: 'Priya Menon',
+    customer: 'Mekdes Tadesse',
     items: 4,
     amount: 86.40,
-    paymentMethod: 'UPI',
+    paymentMethod: 'Cash',
     status: 'completed',
     time: '16:52',
     prescriptionNo: 'Rx-2841',
   },
   {
     id: 'inv-20260402-0090',
-    customer: 'Suresh Kumar',
+    customer: 'Yohannes Kebede',
     items: 2,
     amount: 124.00,
     paymentMethod: 'Cash',
@@ -26,7 +26,7 @@ const recentSales = [
   },
   {
     id: 'inv-20260402-0089',
-    customer: 'Anita Sharma',
+    customer: 'Selam Worku',
     items: 7,
     amount: 312.75,
     paymentMethod: 'Card',
@@ -36,7 +36,7 @@ const recentSales = [
   },
   {
     id: 'inv-20260402-0088',
-    customer: 'Deepak Rao',
+    customer: 'Getachew Alemu',
     items: 1,
     amount: 18.50,
     paymentMethod: 'Cash',
@@ -46,17 +46,17 @@ const recentSales = [
   },
   {
     id: 'inv-20260402-0087',
-    customer: 'Kavitha Nair',
+    customer: 'Bethlehem Assefa',
     items: 3,
     amount: 67.20,
-    paymentMethod: 'UPI',
+    paymentMethod: 'Mobile Money',
     status: 'refunded',
     time: '15:54',
     prescriptionNo: null,
   },
   {
     id: 'inv-20260402-0086',
-    customer: 'Rajesh Pillai',
+    customer: 'Tesfaye Mengistu',
     items: 5,
     amount: 203.90,
     paymentMethod: 'Card',
@@ -66,7 +66,7 @@ const recentSales = [
   },
   {
     id: 'inv-20260402-0085',
-    customer: 'Meera Krishnan',
+    customer: 'Hiwot Desta',
     items: 2,
     amount: 44.60,
     paymentMethod: 'Cash',
@@ -83,7 +83,7 @@ const statusBadge: Record<string, string> = {
 };
 
 const paymentBadge: Record<string, string> = {
-  UPI: 'bg-purple-50 text-purple-700 border border-purple-200',
+  'Mobile Money': 'bg-purple-50 text-purple-700 border border-purple-200',
   Cash: 'bg-slate-100 text-slate-600 border border-slate-200',
   Card: 'bg-blue-50 text-blue-700 border border-blue-200',
 };
@@ -143,7 +143,7 @@ export default function RecentSalesTable() {
                 </td>
                 <td className="table-cell">
                   <span className="font-mono font-semibold text-slate-800 tabular-nums">
-                    ${sale.amount.toFixed(2)}
+                    Br {sale.amount.toFixed(2)}
                   </span>
                 </td>
                 <td className="table-cell">
@@ -179,7 +179,7 @@ export default function RecentSalesTable() {
           Showing 7 of 91 transactions today
         </p>
         <p className="text-xs font-semibold text-slate-700 font-mono tabular-nums">
-          Total: $4,821.60
+          Total: Br 4,821.60
         </p>
       </div>
     </div>

@@ -258,13 +258,13 @@ export default function AddMedicineModal({
                 <div>
                   <label className="form-label">Selling price (per unit) <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Br</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="0.85"
-                      className={`form-input pl-7 ${errors.unitPrice ? 'form-input-error' : ''}`}
+                      className={`form-input pl-9 ${errors.unitPrice ? 'form-input-error' : ''}`}
                       {...register('unitPrice', {
                         required: 'Selling price is required',
                         min: { value: 0.01, message: 'Price must be greater than 0' },
@@ -280,13 +280,13 @@ export default function AddMedicineModal({
                   <label className="form-label">Cost price (per unit) <span className="text-red-500">*</span></label>
                   <p className="text-xs text-slate-400 mb-1.5">Purchase price from supplier</p>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Br</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="0.58"
-                      className={`form-input pl-7 ${errors.costPrice ? 'form-input-error' : ''}`}
+                      className={`form-input pl-9 ${errors.costPrice ? 'form-input-error' : ''}`}
                       {...register('costPrice', {
                         required: 'Cost price is required',
                         min: { value: 0.01, message: 'Cost must be greater than 0' },

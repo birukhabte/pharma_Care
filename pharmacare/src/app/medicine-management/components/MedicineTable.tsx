@@ -958,12 +958,12 @@ function MedicineRow({
       )}
       {visibleColumns.has('col-unitprice') && (
         <td className="table-cell">
-          <span className="font-mono text-sm tabular-nums text-slate-700">${medicine.unitPrice.toFixed(2)}</span>
+          <span className="font-mono text-sm tabular-nums text-slate-700">Br {medicine.unitPrice.toFixed(2)}</span>
         </td>
       )}
       {visibleColumns.has('col-costprice') && (
         <td className="table-cell">
-          <span className="font-mono text-sm tabular-nums text-slate-500">${medicine.costPrice.toFixed(2)}</span>
+          <span className="font-mono text-sm tabular-nums text-slate-500">Br {medicine.costPrice.toFixed(2)}</span>
         </td>
       )}
       {visibleColumns.has('col-supplier') && (

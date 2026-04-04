@@ -25,25 +25,25 @@ const seedData = async () => {
     
     const users = await User.insertMany([
       {
-        email: 'ravi.patel@pharmacare.in',
+        email: 'abebe.bekele@pharmacare.et',
         password: hashedPassword,
-        fullName: 'Ravi Patel',
+        fullName: 'Abebe Bekele',
         role: 'head_pharmacist',
-        pharmacyName: 'PharmaCare Central'
+        pharmacyName: 'PharmaCare Addis Ababa'
       },
       {
-        email: 'meera.nair@pharmacare.in',
+        email: 'tigist.haile@pharmacare.et',
         password: await bcrypt.hash('Staff@2026', 10),
-        fullName: 'Meera Nair',
+        fullName: 'Tigist Haile',
         role: 'counter_staff',
-        pharmacyName: 'PharmaCare Central'
+        pharmacyName: 'PharmaCare Addis Ababa'
       },
       {
-        email: 'arjun.sharma@pharmacare.in',
+        email: 'dawit.tesfaye@pharmacare.et',
         password: await bcrypt.hash('Invent@2026', 10),
-        fullName: 'Arjun Sharma',
+        fullName: 'Dawit Tesfaye',
         role: 'inventory_manager',
-        pharmacyName: 'PharmaCare Central'
+        pharmacyName: 'PharmaCare Addis Ababa'
       }
     ]);
 
@@ -125,18 +125,18 @@ const seedData = async () => {
     await Sale.insertMany([
       {
         invoiceNo: 'INV-2026-0412',
-        customerName: 'Rajesh Kumar',
+        customerName: 'Mulugeta Alemayehu',
         items: [
           { medicine: medicines[0]._id, quantity: 2, price: 1.70 },
           { medicine: medicines[3]._id, quantity: 10, price: 2.80 }
         ],
         totalAmount: 245.80,
-        paymentMethod: 'UPI',
+        paymentMethod: 'Cash',
         soldBy: users[1]._id
       },
       {
         invoiceNo: 'INV-2026-0411',
-        customerName: 'Priya Sharma',
+        customerName: 'Hanna Girma',
         items: [
           { medicine: medicines[2]._id, quantity: 30, price: 36.00 }
         ],

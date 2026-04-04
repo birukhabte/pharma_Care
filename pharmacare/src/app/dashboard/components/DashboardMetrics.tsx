@@ -108,9 +108,9 @@ export default function DashboardMetrics() {
       {/* Hero: Daily Revenue */}
       <MetricCard
         title="Today's Revenue"
-        value="$4,821.60"
+        value="Br 4,821.60"
         subtitle="Apr 2, 2026 · Counter + delivery"
-        trend={{ value: '+12.4%', direction: 'up', label: 'vs yesterday ($4,289.40)' }}
+        trend={{ value: '+12.4%', direction: 'up', label: 'vs yesterday (Br 4,289.40)' }}
         icon={<DollarSign size={20} />}
         variant="success"
         size="hero"
@@ -159,7 +159,7 @@ export default function DashboardMetrics() {
       {/* Gross Margin */}
       <MetricCard
         title="Gross Margin Today"
-        value="$1,144.30"
+        value="Br 1,144.30"
         subtitle="Revenue minus cost of goods"
         trend={{ value: '23.7%', direction: 'up', label: 'Margin rate vs 21.2% avg' }}
         icon={<TrendingUp size={20} />}

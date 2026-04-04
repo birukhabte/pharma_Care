@@ -40,9 +40,9 @@ type RegisterFormData = {
 };
 
 const demoCredentials = [
-  { role: 'Head Pharmacist', email: 'ravi.patel@pharmacare.in', password: 'Pharma@2026' },
-  { role: 'Counter Staff', email: 'meera.nair@pharmacare.in', password: 'Staff@2026' },
-  { role: 'Inventory Manager', email: 'arjun.sharma@pharmacare.in', password: 'Invent@2026' },
+  { role: 'Head Pharmacist', email: 'abebe.bekele@pharmacare.et', password: 'Pharma@2026' },
+  { role: 'Counter Staff', email: 'tigist.haile@pharmacare.et', password: 'Staff@2026' },
+  { role: 'Inventory Manager', email: 'dawit.tesfaye@pharmacare.et', password: 'Invent@2026' },
 ];
 
 const roleOptions = [
@@ -265,7 +265,7 @@ export default function AuthForm() {
                     />
                     <input
                       type="email"
-                      placeholder="ravi@pharmacare.in"
+                      placeholder="abebe@pharmacare.et"
                       className={`form-input ${
                         loginForm.formState.errors.email ? 'form-input-error' : ''
                       }`}
@@ -421,7 +421,7 @@ export default function AuthForm() {
                       <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                       <input
                         type="text"
-                        placeholder="Ravi Patel"
+                        placeholder="Abebe Bekele"
                         className={`form-input ${registerForm.formState.errors.fullName ? 'form-input-error' : ''}`}
                         style={{ paddingLeft: '2.5rem' }}
                         {...registerForm.register('fullName', {
@@ -488,7 +488,7 @@ export default function AuthForm() {
                     <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                     <input
                       type="email"
-                      placeholder="ravi@citychemist.com"
+                      placeholder="abebe@pharmacy.et"
                       className={`form-input ${registerForm.formState.errors.email ? 'form-input-error' : ''}`}
                       style={{ paddingLeft: '2.5rem' }}
                       {...registerForm.register('email', {

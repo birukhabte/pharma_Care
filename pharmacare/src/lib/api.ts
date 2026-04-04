@@ -129,6 +129,36 @@ class ApiClient {
   async getExpiryAlerts() {
     return this.request('/dashboard/expiry-alerts');
   }
+
+  // Customers
+  async getCustomers() {
+    const data = await this.request('/customers');
+    return data.customers || []; // Extract customers array from response
+  }
+
+  async getCustomer(id: string) {
+    return this.request(`/customers/${id}`);
+  }
+
+  async createCustomer(customer: any) {
+    return this.request('/customers', {
+      method: 'POST',
+      body: JSON.stringify(customer),
+    });
+  }
+
+  async updateCustomer(id: string, customer: any) {
+    return this.request(`/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(customer),
+    });
+  }
+
+  async deleteCustomer(id: string) {
+    return this.request(`/customers/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiClient();

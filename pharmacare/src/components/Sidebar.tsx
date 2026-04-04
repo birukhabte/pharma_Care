@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
-import { LayoutDashboard, Pill, ShoppingCart, BarChart3, Package, Users, Settings, ChevronLeft, ChevronRight, LogOut, Truck, ClipboardList,  } from 'lucide-react';
+import { getUserRole, canRead, ROLE_LABELS } from '@/lib/permissions';
+import { api } from '@/lib/api';
+import { LayoutDashboard, Pill, ShoppingCart, BarChart3, Package, Users, Settings, ChevronLeft, ChevronRight, LogOut, Truck, ClipboardList, UserCog } from 'lucide-react';
 
 interface NavItem {
   id: string;
@@ -13,6 +15,8 @@ interface NavItem {
   icon: React.ReactNode;
   badge?: number;
   group: string;
+  resource: string; // For permission checking
+  requiredRoles?: string[]; // Optional: specific roles that can see this
 }
 
 const navItems: NavItem[] = [
@@ -22,6 +26,7 @@ const navItems: NavItem[] = [
     href: '/dashboard',
     icon: <LayoutDashboard size={18} />,
     group: 'main',
+    resource: 'dashboard',
   },
   {
     id: 'nav-medicines',
@@ -30,6 +35,7 @@ const navItems: NavItem[] = [
     icon: <Pill size={18} />,
     badge: 5,
     group: 'main',
+    resource: 'medicines',
   },
   {
     id: 'nav-sales',
@@ -37,6 +43,8 @@ const navItems: NavItem[] = [
     href: '/sales',
     icon: <ShoppingCart size={18} />,
     group: 'main',
+    resource: 'sales',
+    requiredRoles: ['admin', 'pharmacist'],
   },
   {
     id: 'nav-inventory',
@@ -44,6 +52,8 @@ const navItems: NavItem[] = [
     href: '/inventory',
     icon: <Package size={18} />,
     group: 'main',
+    resource: 'inventory',
+    requiredRoles: ['admin', 'inventory_manager'],
   },
   {
     id: 'nav-suppliers',
@@ -51,6 +61,8 @@ const navItems: NavItem[] = [
     href: '/suppliers',
     icon: <Truck size={18} />,
     group: 'main',
+    resource: 'suppliers',
+    requiredRoles: ['admin', 'inventory_manager'],
   },
   {
     id: 'nav-prescriptions',
@@ -59,6 +71,8 @@ const navItems: NavItem[] = [
     icon: <ClipboardList size={18} />,
     badge: 3,
     group: 'main',
+    resource: 'prescriptions',
+    requiredRoles: ['admin', 'pharmacist'],
   },
   {
     id: 'nav-reports',
@@ -66,6 +80,7 @@ const navItems: NavItem[] = [
     href: '/reports',
     icon: <BarChart3 size={18} />,
     group: 'analytics',
+    resource: 'reports',
   },
   {
     id: 'nav-customers',
@@ -73,6 +88,17 @@ const navItems: NavItem[] = [
     href: '/customers',
     icon: <Users size={18} />,
     group: 'analytics',
+    resource: 'customers',
+    requiredRoles: ['admin', 'pharmacist'],
+  },
+  {
+    id: 'nav-users',
+    label: 'User Management',
+    href: '/users',
+    icon: <UserCog size={18} />,
+    group: 'system',
+    resource: 'users',
+    requiredRoles: ['admin'],
   },
   {
     id: 'nav-settings',
@@ -80,6 +106,8 @@ const navItems: NavItem[] = [
     href: '/settings',
     icon: <Settings size={18} />,
     group: 'system',
+    resource: 'settings',
+    requiredRoles: ['admin'],
   },
 ];
 
@@ -90,11 +118,55 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState('User');
+  const [userInitials, setUserInitials] = useState('U');
+
+  useEffect(() => {
+    const role = getUserRole();
+    setUserRole(role);
+
+    // Get user info from localStorage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserName(user.fullName || 'User');
+        const initials = user.fullName
+          ? user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+          : 'U';
+        setUserInitials(initials);
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    api.logout();
+    router.push('/sign-up-login-screen');
+  };
+
+  // Filter nav items based on user role
+  const visibleNavItems = navItems.filter((item) => {
+    // Check if user has permission to read this resource
+    if (!canRead(userRole || '', item.resource as any)) {
+      return false;
+    }
+
+    // Check if specific roles are required
+    if (item.requiredRoles && userRole) {
+      return item.requiredRoles.includes(userRole);
+    }
+
+    return true;
+  });
 
   const groupedItems = {
-    main: navItems.filter((i) => i.group === 'main'),
-    analytics: navItems.filter((i) => i.group === 'analytics'),
-    system: navItems.filter((i) => i.group === 'system'),
+    main: visibleNavItems.filter((i) => i.group === 'main'),
+    analytics: visibleNavItems.filter((i) => i.group === 'analytics'),
+    system: visibleNavItems.filter((i) => i.group === 'system'),
   };
 
   return (
@@ -221,13 +293,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* User Profile */}
       <div className="border-t border-slate-100 dark:border-slate-700 p-2 flex-shrink-0">
         {!collapsed ? (
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group">
+          <div 
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group"
+          >
             <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">RP</span>
+              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">Ravi Patel</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">Head Pharmacist</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{userName}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                {userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}
+              </p>
             </div>
             <LogOut
               size={14}
@@ -235,9 +312,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             />
           </div>
         ) : (
-          <div className="flex justify-center py-2" title="Ravi Patel — Head Pharmacist">
+          <div 
+            onClick={handleLogout}
+            className="flex justify-center py-2" 
+            title={`${userName} — ${userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}`}
+          >
             <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center cursor-pointer hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
-              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">RP</span>
+              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
             </div>
           </div>
         )}

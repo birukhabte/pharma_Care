@@ -46,8 +46,30 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [currentDateTime, setCurrentDateTime] = useState('');
   const router = useRouter();
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Update date and time every second
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      };
+      setCurrentDateTime(now.toLocaleString('en-US', options));
+    };
+
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const applyTheme = React.useCallback((newTheme: 'light' | 'dark') => {
     if (typeof window !== 'undefined') {
@@ -135,9 +157,9 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* Date */}
+        {/* Date & Time */}
         <span className="hidden md:block text-xs text-slate-400 dark:text-slate-500 font-mono">
-          Thu, Apr 2, 2026
+          {currentDateTime}
         </span>
 
         {/* Theme Toggle */}

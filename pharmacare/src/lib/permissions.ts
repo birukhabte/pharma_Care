@@ -1,7 +1,7 @@
 // Frontend Role-Based Access Control
 
 export type Role = 'admin' | 'pharmacist' | 'inventory_manager';
-export type Resource = 'users' | 'medicines' | 'sales' | 'reports' | 'suppliers' | 'settings' | 'dashboard';
+export type Resource = 'users' | 'medicines' | 'sales' | 'reports' | 'suppliers' | 'settings' | 'dashboard' | 'customers' | 'prescriptions' | 'inventory';
 export type Action = 'create' | 'read' | 'update' | 'delete' | 'export';
 
 const PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
@@ -9,11 +9,14 @@ const PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
   admin: {
     users: ['create', 'read', 'update', 'delete'],
     medicines: ['create', 'read', 'update', 'delete'],
-    sales: ['create', 'read', 'update', 'delete'],
+    sales: ['create', 'read', 'update', 'delete', 'export'],
     reports: ['read', 'export'],
     suppliers: ['create', 'read', 'update', 'delete'],
     settings: ['read', 'update'],
-    dashboard: ['read']
+    dashboard: ['read'],
+    customers: ['create', 'read', 'update', 'delete'],
+    prescriptions: ['create', 'read', 'update', 'delete'],
+    inventory: ['create', 'read', 'update', 'delete']
   },
   
   // Pharmacist - Daily operations
@@ -24,18 +27,24 @@ const PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     reports: ['read'],
     suppliers: [],
     settings: [],
-    dashboard: ['read']
+    dashboard: ['read'],
+    customers: ['read'],
+    prescriptions: ['create', 'read', 'update'],
+    inventory: ['read']
   },
   
   // Inventory Manager - Stock management
   inventory_manager: {
     users: [],
     medicines: ['create', 'read', 'update'],
-    sales: ['read'],
-    reports: ['read'],
-    suppliers: ['read', 'update'],
+    sales: [],
+    reports: ['read', 'export'],
+    suppliers: ['create', 'read', 'update'],
     settings: [],
-    dashboard: ['read']
+    dashboard: ['read'],
+    customers: [],
+    prescriptions: [],
+    inventory: ['create', 'read', 'update', 'delete']
   }
 };
 
@@ -88,4 +97,19 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   admin: 'Full system control - manage users, medicines, sales, and settings',
   pharmacist: 'Daily operations - view medicines, process sales, generate invoices',
   inventory_manager: 'Stock management - add/update medicines, track inventory, monitor expiry'
+};
+
+// Custom hook for permissions
+export const usePermissions = () => {
+  const role = getUserRole();
+  
+  return {
+    role,
+    canCreate: (resource: Resource) => role ? canCreate(role, resource) : false,
+    canRead: (resource: Resource) => role ? canRead(role, resource) : false,
+    canUpdate: (resource: Resource) => role ? canUpdate(role, resource) : false,
+    canDelete: (resource: Resource) => role ? canDelete(role, resource) : false,
+    canExport: (resource: Resource) => role ? canExport(role, resource) : false,
+    hasPermission: (resource: Resource, action: Action) => role ? hasPermission(role, resource, action) : false,
+  };
 };

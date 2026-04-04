@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { api } from '@/lib/api';
+import { usePermissions } from '@/lib/permissions';
 import {
   Users,
   Search,
@@ -26,24 +28,33 @@ import {
   Eye,
   DollarSign,
   Activity,
+  Loader2,
+  Lock,
 } from 'lucide-react';
 
 // Types
 interface Customer {
-  id: string;
+  _id: string;
   name: string;
-  email: string;
+  email?: string;
   phone: string;
-  address: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
   dateOfBirth?: string;
-  registeredDate: string;
-  totalPurchases: number;
-  totalSpent: number;
-  lastPurchaseDate?: string;
+  gender?: 'male' | 'female' | 'other';
   loyaltyPoints: number;
-  status: 'active' | 'inactive';
+  totalPurchases: number;
+  lastPurchaseDate?: string;
+  status: 'active' | 'inactive' | 'blocked';
   notes?: string;
-  prescriptionRequired?: boolean;
+  registrationDate: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PurchaseHistory {
@@ -58,56 +69,31 @@ interface CustomerFormData {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   dateOfBirth: string;
+  gender: 'male' | 'female' | 'other' | '';
   notes: string;
-  prescriptionRequired: boolean;
 }
 
-type SortField = 'name' | 'totalSpent' | 'totalPurchases' | 'registeredDate' | 'lastPurchaseDate';
+type SortField = 'name' | 'totalPurchases' | 'registrationDate' | 'lastPurchaseDate';
 type SortOrder = 'asc' | 'desc';
 
-// Mock data generator
-const generateMockCustomers = (): Customer[] => {
-  const firstNames = ['John', 'Sarah', 'Michael', 'Emma', 'David', 'Lisa', 'James', 'Maria', 'Robert', 'Jennifer'];
-  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
-  const streets = ['Main St', 'Oak Ave', 'Maple Dr', 'Cedar Ln', 'Pine Rd', 'Elm St', 'Park Ave', 'Lake Dr'];
-  
-  return Array.from({ length: 50 }, (_, i) => {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const totalPurchases = Math.floor(Math.random() * 50) + 1;
-    const totalSpent = Math.floor(Math.random() * 50000) + 500;
-    const daysAgo = Math.floor(Math.random() * 365);
-    const lastPurchaseDays = Math.floor(Math.random() * 90);
-    
-    return {
-      id: `cust-${i + 1}`,
-      name: `${firstName} ${lastName}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`,
-      phone: `+1 ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-      address: `${Math.floor(Math.random() * 9999) + 1} ${streets[Math.floor(Math.random() * streets.length)]}, City, ST ${Math.floor(Math.random() * 90000) + 10000}`,
-      dateOfBirth: `${Math.floor(Math.random() * 30) + 1960}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-      registeredDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      totalPurchases,
-      totalSpent,
-      lastPurchaseDate: totalPurchases > 0 ? new Date(Date.now() - lastPurchaseDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined,
-      loyaltyPoints: Math.floor(totalSpent / 10),
-      status: Math.random() > 0.1 ? 'active' : 'inactive',
-      notes: Math.random() > 0.7 ? 'VIP customer - priority service' : undefined,
-      prescriptionRequired: Math.random() > 0.6,
-    };
-  });
-};
-
-const mockPurchaseHistory: Record<string, PurchaseHistory[]> = {};
-
 export default function CustomerPage() {
+  // Permissions
+  const permissions = usePermissions();
+  
   // State management
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [sortField, setSortField] = useState<SortField>('totalSpent');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'blocked'>('all');
+  const [sortField, setSortField] = useState<SortField>('registrationDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -121,16 +107,35 @@ export default function CustomerPage() {
     name: '',
     email: '',
     phone: '',
-    address: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'Ethiopia',
+    },
     dateOfBirth: '',
+    gender: '',
     notes: '',
-    prescriptionRequired: false,
   });
+
+  // Fetch customers from database
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.getCustomers();
+      setCustomers(data);
+    } catch (error: any) {
+      showNotification('error', error.message || 'Failed to fetch customers');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Initialize data
   useEffect(() => {
-    setCustomers(generateMockCustomers());
-  }, []);
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   // Notification handler
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
@@ -143,7 +148,7 @@ export default function CustomerPage() {
     let filtered = customers.filter((customer) => {
       const matchesSearch =
         customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (customer.email && customer.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
         customer.phone.includes(searchQuery);
       const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -153,7 +158,7 @@ export default function CustomerPage() {
       let aVal: any = a[sortField];
       let bVal: any = b[sortField];
 
-      if (sortField === 'registeredDate' || sortField === 'lastPurchaseDate') {
+      if (sortField === 'registrationDate' || sortField === 'lastPurchaseDate') {
         aVal = new Date(aVal || 0).getTime();
         bVal = new Date(bVal || 0).getTime();
       }
@@ -176,17 +181,18 @@ export default function CustomerPage() {
   // Analytics
   const analytics = useMemo(() => {
     const active = customers.filter((c) => c.status === 'active').length;
-    const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-    const avgSpent = customers.length > 0 ? totalRevenue / customers.length : 0;
-    const topCustomer = customers.reduce((max, c) => (c.totalSpent > max.totalSpent ? c : max), customers[0]);
+    const inactive = customers.filter((c) => c.status === 'inactive').length;
+    const blocked = customers.filter((c) => c.status === 'blocked').length;
+    const totalLoyaltyPoints = customers.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0);
+    const avgLoyaltyPoints = customers.length > 0 ? totalLoyaltyPoints / customers.length : 0;
 
     return {
       total: customers.length,
       active,
-      inactive: customers.length - active,
-      totalRevenue,
-      avgSpent,
-      topCustomer,
+      inactive,
+      blocked,
+      totalLoyaltyPoints,
+      avgLoyaltyPoints,
     };
   }, [customers]);
 
@@ -206,12 +212,18 @@ export default function CustomerPage() {
       setSelectedCustomer(customer);
       setFormData({
         name: customer.name,
-        email: customer.email,
+        email: customer.email || '',
         phone: customer.phone,
-        address: customer.address,
+        address: {
+          street: customer.address?.street || '',
+          city: customer.address?.city || '',
+          state: customer.address?.state || '',
+          zipCode: customer.address?.zipCode || '',
+          country: customer.address?.country || 'Ethiopia',
+        },
         dateOfBirth: customer.dateOfBirth || '',
+        gender: customer.gender || '',
         notes: customer.notes || '',
-        prescriptionRequired: customer.prescriptionRequired || false,
       });
     } else {
       setSelectedCustomer(null);
@@ -219,10 +231,16 @@ export default function CustomerPage() {
         name: '',
         email: '',
         phone: '',
-        address: '',
+        address: {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'Ethiopia',
+        },
         dateOfBirth: '',
+        gender: '',
         notes: '',
-        prescriptionRequired: false,
       });
     }
     setShowModal(true);
@@ -233,38 +251,27 @@ export default function CustomerPage() {
     setSelectedCustomer(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.phone) {
       showNotification('error', 'Please fill in all required fields');
       return;
     }
 
-    if (modalMode === 'add') {
-      const newCustomer: Customer = {
-        id: `cust-${Date.now()}`,
-        ...formData,
-        registeredDate: new Date().toISOString().split('T')[0],
-        totalPurchases: 0,
-        totalSpent: 0,
-        loyaltyPoints: 0,
-        status: 'active',
-      };
-      setCustomers([...customers, newCustomer]);
-      showNotification('success', 'Customer added successfully');
-    } else if (modalMode === 'edit' && selectedCustomer) {
-      setCustomers(
-        customers.map((c) =>
-          c.id === selectedCustomer.id
-            ? { ...c, ...formData }
-            : c
-        )
-      );
-      showNotification('success', 'Customer updated successfully');
+    try {
+      if (modalMode === 'add') {
+        await api.createCustomer(formData);
+        showNotification('success', 'Customer added successfully');
+      } else if (modalMode === 'edit' && selectedCustomer) {
+        await api.updateCustomer(selectedCustomer._id, formData);
+        showNotification('success', 'Customer updated successfully');
+      }
+      await fetchCustomers();
+      closeModal();
+    } catch (error: any) {
+      showNotification('error', error.message || 'Operation failed');
     }
-
-    closeModal();
   };
 
   const handleDelete = (id: string) => {
@@ -272,32 +279,39 @@ export default function CustomerPage() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (customerToDelete) {
-      setCustomers(customers.filter((c) => c.id !== customerToDelete));
-      showNotification('success', 'Customer deleted successfully');
+      try {
+        await api.deleteCustomer(customerToDelete);
+        showNotification('success', 'Customer deleted successfully');
+        await fetchCustomers();
+      } catch (error: any) {
+        showNotification('error', error.message || 'Failed to delete customer');
+      }
     }
     setShowDeleteConfirm(false);
     setCustomerToDelete(null);
   };
 
-  const toggleStatus = (id: string) => {
-    setCustomers(
-      customers.map((c) =>
-        c.id === id ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' } : c
-      )
-    );
-    showNotification('success', 'Customer status updated');
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      await api.updateCustomer(id, { status: newStatus });
+      showNotification('success', 'Customer status updated');
+      await fetchCustomers();
+    } catch (error: any) {
+      showNotification('error', error.message || 'Failed to update status');
+    }
   };
 
   const exportToCSV = () => {
-    const headers = ['Name', 'Email', 'Phone', 'Total Spent', 'Total Purchases', 'Status'];
+    const headers = ['Name', 'Email', 'Phone', 'Total Purchases', 'Loyalty Points', 'Status'];
     const rows = filteredCustomers.map((c) => [
       c.name,
-      c.email,
+      c.email || '',
       c.phone,
-      c.totalSpent.toFixed(2),
-      c.totalPurchases,
+      c.totalPurchases || 0,
+      c.loyaltyPoints || 0,
       c.status,
     ]);
 
@@ -321,13 +335,24 @@ export default function CustomerPage() {
             <h1 className="text-2xl font-bold text-slate-800">Customer Management</h1>
             <p className="text-sm text-slate-500 mt-0.5">Manage customer information and track purchase history</p>
           </div>
-          <button
-            onClick={() => openModal('add')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <Plus size={16} />
-            Add Customer
-          </button>
+          {permissions.canCreate('customers') ? (
+            <button
+              onClick={() => openModal('add')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <Plus size={16} />
+              Add Customer
+            </button>
+          ) : (
+            <button
+              disabled
+              title="You don't have permission to add customers"
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg cursor-not-allowed"
+            >
+              <Lock size={16} />
+              Add Customer
+            </button>
+          )}
         </div>
 
         {/* Analytics Cards */}
@@ -340,6 +365,39 @@ export default function CustomerPage() {
             <p className="text-2xl font-bold text-slate-800">{analytics.total}</p>
             <p className="text-xs text-slate-400 mt-1">
               {analytics.active} active · {analytics.inactive} inactive
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase">Active Customers</span>
+              <Activity size={16} className="text-emerald-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">{analytics.active}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {((analytics.active / analytics.total) * 100 || 0).toFixed(1)}% of total
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase">Total Loyalty Points</span>
+              <TrendingUp size={16} className="text-amber-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">{analytics.totalLoyaltyPoints.toLocaleString()}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Avg: {Math.round(analytics.avgLoyaltyPoints)} per customer
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase">Blocked</span>
+              <AlertCircle size={16} className="text-red-500" />
+            </div>
+            <p className="text-2xl font-bold text-slate-800">{analytics.blocked}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Requires attention
             </p>
           </div>
         </div>
@@ -372,6 +430,7 @@ export default function CustomerPage() {
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="blocked">Blocked</option>
             </select>
 
             <button
@@ -386,160 +445,168 @@ export default function CustomerPage() {
 
         {/* Customer Table */}
         <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
-          <div className="overflow-x-auto flex-1">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
-                <tr>
-                  <th
-                    onClick={() => handleSort('name')}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      Customer
-                      {sortField === 'name' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th
-                    onClick={() => handleSort('totalPurchases')}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      Purchases
-                      {sortField === 'totalPurchases' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('totalSpent')}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      Total Spent
-                      {sortField === 'totalSpent' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSort('lastPurchaseDate')}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      Last Purchase
-                      {sortField === 'lastPurchaseDate' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Loyalty Points
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedCustomers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">{customer.name}</p>
-                        <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Calendar size={10} />
-                          Joined {new Date(customer.registeredDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-1">
-                        <p className="text-xs text-slate-600 flex items-center gap-1">
-                          <Mail size={10} className="text-slate-400" />
-                          {customer.email}
-                        </p>
-                        <p className="text-xs text-slate-600 flex items-center gap-1">
-                          <Phone size={10} className="text-slate-400" />
-                          {customer.phone}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <ShoppingBag size={14} className="text-slate-400" />
-                        <span className="text-sm font-medium text-slate-700">{customer.totalPurchases}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-bold text-emerald-600">₹{customer.totalSpent.toLocaleString()}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-slate-500">
-                        {customer.lastPurchaseDate
-                          ? new Date(customer.lastPurchaseDate).toLocaleDateString()
-                          : 'No purchases'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 text-xs font-medium rounded-full">
-                        <TrendingUp size={10} />
-                        {customer.loyaltyPoints}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleStatus(customer.id)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
-                          customer.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                        }`}
-                      >
-                        <div className={`w-1.5 h-1.5 rounded-full ${customer.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                        {customer.status}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openModal('view', customer)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="View Details"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => openModal('edit', customer)}
-                          className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(customer.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {paginatedCustomers.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                <Users size={48} className="mb-3 opacity-40" />
-                <p className="text-sm font-medium">No customers found</p>
-                <p className="text-xs mt-1">Try adjusting your search or filters</p>
+          {loading ? (
+            <div className="flex-1 flex items-center justify-center py-16">
+              <div className="text-center">
+                <Loader2 size={48} className="mx-auto mb-3 text-teal-600 animate-spin" />
+                <p className="text-sm font-medium text-slate-600">Loading customers...</p>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
+                    <tr>
+                      <th
+                        onClick={() => handleSort('name')}
+                        className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Customer
+                          {sortField === 'name' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th
+                        onClick={() => handleSort('totalPurchases')}
+                        className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Purchases
+                          {sortField === 'totalPurchases' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => handleSort('lastPurchaseDate')}
+                        className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Last Purchase
+                          {sortField === 'lastPurchaseDate' && <span className="text-teal-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>}
+                        </div>
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Loyalty Points
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {paginatedCustomers.map((customer) => (
+                      <tr key={customer._id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{customer.name}</p>
+                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                              <Calendar size={10} />
+                              Joined {new Date(customer.registrationDate || customer.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="space-y-1">
+                            {customer.email && (
+                              <p className="text-xs text-slate-600 flex items-center gap-1">
+                                <Mail size={10} className="text-slate-400" />
+                                {customer.email}
+                              </p>
+                            )}
+                            <p className="text-xs text-slate-600 flex items-center gap-1">
+                              <Phone size={10} className="text-slate-400" />
+                              {customer.phone}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <ShoppingBag size={14} className="text-slate-400" />
+                            <span className="text-sm font-medium text-slate-700">{customer.totalPurchases || 0}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-slate-500">
+                            {customer.lastPurchaseDate
+                              ? new Date(customer.lastPurchaseDate).toLocaleDateString()
+                              : 'No purchases'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 text-xs font-medium rounded-full">
+                            <TrendingUp size={10} />
+                            {customer.loyaltyPoints || 0}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => toggleStatus(customer._id, customer.status)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                              customer.status === 'active'
+                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                : customer.status === 'blocked'
+                                ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            }`}
+                          >
+                            <div className={`w-1.5 h-1.5 rounded-full ${
+                              customer.status === 'active' ? 'bg-emerald-500' : 
+                              customer.status === 'blocked' ? 'bg-red-500' : 'bg-slate-400'
+                            }`} />
+                            {customer.status}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => openModal('view', customer)}
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="View Details"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            {permissions.canUpdate('customers') && (
+                              <button
+                                onClick={() => openModal('edit', customer)}
+                                className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition-colors"
+                                title="Edit"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                            {permissions.canDelete('customers') && (
+                              <button
+                                onClick={() => handleDelete(customer._id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {paginatedCustomers.length === 0 && !loading && (
+                  <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                    <Users size={48} className="mb-3 opacity-40" />
+                    <p className="text-sm font-medium">No customers found</p>
+                    <p className="text-xs mt-1">Try adjusting your search or filters</p>
+                  </div>
+                )}
+              </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {totalPages > 1 && !loading && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
               <p className="text-xs text-slate-500">
                 Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
@@ -587,6 +654,8 @@ export default function CustomerPage() {
                 </button>
               </div>
             </div>
+          )}
+            </>
           )}
         </div>
       </div>
@@ -651,7 +720,9 @@ export default function CustomerPage() {
                       <label className="text-xs font-medium text-slate-500 uppercase">Address</label>
                       <p className="text-sm text-slate-700 mt-1 flex items-start gap-1">
                         <MapPin size={12} className="text-slate-400 mt-0.5" />
-                        {selectedCustomer.address}
+                        {selectedCustomer.address 
+                          ? `${selectedCustomer.address.street || ''}, ${selectedCustomer.address.city || ''}, ${selectedCustomer.address.state || ''}, ${selectedCustomer.address.country || ''}`
+                          : 'No address provided'}
                       </p>
                     </div>
                     {selectedCustomer.dateOfBirth && (
@@ -662,23 +733,19 @@ export default function CustomerPage() {
                     )}
                     <div>
                       <label className="text-xs font-medium text-slate-500 uppercase">Registered Date</label>
-                      <p className="text-sm text-slate-700 mt-1">{new Date(selectedCustomer.registeredDate).toLocaleDateString()}</p>
+                      <p className="text-sm text-slate-700 mt-1">{new Date(selectedCustomer.registrationDate || selectedCustomer.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
 
                   {/* Purchase Stats */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-xs font-medium text-blue-600 uppercase mb-1">Total Purchases</p>
-                      <p className="text-xl font-bold text-blue-700">{selectedCustomer.totalPurchases}</p>
-                    </div>
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                      <p className="text-xs font-medium text-emerald-600 uppercase mb-1">Total Spent</p>
-                      <p className="text-xl font-bold text-emerald-700">₹{selectedCustomer.totalSpent.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-blue-700">{selectedCustomer.totalPurchases || 0}</p>
                     </div>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                       <p className="text-xs font-medium text-amber-600 uppercase mb-1">Loyalty Points</p>
-                      <p className="text-xl font-bold text-amber-700">{selectedCustomer.loyaltyPoints}</p>
+                      <p className="text-xl font-bold text-amber-700">{selectedCustomer.loyaltyPoints || 0}</p>
                     </div>
                   </div>
 
@@ -693,13 +760,6 @@ export default function CustomerPage() {
                     <div>
                       <label className="text-xs font-medium text-slate-500 uppercase">Notes</label>
                       <p className="text-sm text-slate-700 mt-1 bg-slate-50 p-3 rounded-lg">{selectedCustomer.notes}</p>
-                    </div>
-                  )}
-
-                  {selectedCustomer.prescriptionRequired && (
-                    <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      <AlertCircle size={16} />
-                      <span>Prescription required for purchases</span>
                     </div>
                   )}
                 </div>
@@ -749,13 +809,35 @@ export default function CustomerPage() {
                     </div>
 
                     <div className="col-span-2">
-                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Address</label>
-                      <textarea
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
-                        placeholder="Enter full address"
-                        rows={2}
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Street Address</label>
+                      <input
+                        type="text"
+                        value={formData.address.street}
+                        onChange={(e) => setFormData({ ...formData, address: { ...formData.address, street: e.target.value } })}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="Enter street address"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">City</label>
+                      <input
+                        type="text"
+                        value={formData.address.city}
+                        onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="City"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">State/Region</label>
+                      <input
+                        type="text"
+                        value={formData.address.state}
+                        onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="State/Region"
                       />
                     </div>
 
@@ -769,16 +851,18 @@ export default function CustomerPage() {
                       />
                     </div>
 
-                    <div className="flex items-center">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.prescriptionRequired}
-                          onChange={(e) => setFormData({ ...formData, prescriptionRequired: e.target.checked })}
-                          className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-2 focus:ring-teal-500"
-                        />
-                        <span className="text-sm text-slate-700">Prescription Required</span>
-                      </label>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">Gender</label>
+                      <select
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
 
                     <div className="col-span-2">

@@ -41,18 +41,24 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`PharmaCare API running on port ${PORT}`);
-  console.log(`Available routes:`);
-  console.log(`  - /api/auth`);
-  console.log(`  - /api/medicines`);
-  console.log(`  - /api/dashboard`);
-  console.log(`  - /api/customers`);
-  console.log(`  - /api/suppliers`);
-  console.log(`  - /api/prescriptions`);
-  console.log(`  - /api/purchase-orders`);
-  console.log(`  - /api/stock-movements`);
-  console.log(`  - /api/notifications`);
-  console.log(`  - /api/settings`);
-  console.log(`  - /api/audit-logs`);
-});
+// Start server (only in non-serverless environment)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`PharmaCare API running on port ${PORT}`);
+    console.log(`Available routes:`);
+    console.log(`  - /api/auth`);
+    console.log(`  - /api/medicines`);
+    console.log(`  - /api/dashboard`);
+    console.log(`  - /api/customers`);
+    console.log(`  - /api/suppliers`);
+    console.log(`  - /api/prescriptions`);
+    console.log(`  - /api/purchase-orders`);
+    console.log(`  - /api/stock-movements`);
+    console.log(`  - /api/notifications`);
+    console.log(`  - /api/settings`);
+    console.log(`  - /api/audit-logs`);
+  });
+}
+
+// Export for Vercel serverless functions
+module.exports = app;

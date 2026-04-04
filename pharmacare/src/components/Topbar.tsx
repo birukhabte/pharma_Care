@@ -52,19 +52,23 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const applyTheme = React.useCallback((newTheme: 'light' | 'dark') => {
     if (typeof window !== 'undefined') {
       const html = document.documentElement;
+      const body = document.body;
+      
       if (newTheme === 'dark') {
         html.classList.add('dark');
+        body.style.backgroundColor = '#0f172a'; // slate-900
+        body.style.color = '#e2e8f0'; // slate-200
       } else {
         html.classList.remove('dark');
+        body.style.backgroundColor = '';
+        body.style.color = '';
       }
-      console.log('Theme applied:', newTheme, 'Classes:', html.classList.toString());
+      // Theme applied successfully
     }
   }, []);
 
   const toggleTheme = () => {
-    console.log('Toggle clicked, current theme:', theme);
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    console.log('Switching to:', newTheme);
     setTheme(newTheme);
     if (typeof window !== 'undefined') {
       localStorage.setItem('theme', newTheme);

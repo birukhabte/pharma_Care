@@ -388,7 +388,6 @@ export default function MedicineTable() {
       setMedicines(data.map((m: any) => ({ ...m, id: m._id })));
     } catch (error: any) {
       // If API fails, use mock data
-      console.log('API failed, using mock data:', error.message);
       setMedicines(MOCK_MEDICINES);
       toast.error('Using offline data - ' + (error.message || 'Failed to load medicines'));
     } finally {

@@ -23,6 +23,18 @@
   --radius: 0.5rem;
 }
 
+/* Dark mode color overrides */
+.dark {
+  --color-background: oklch(0.12 0.01 240);
+  --color-foreground: oklch(0.95 0 0);
+  --color-secondary: oklch(0.18 0.01 240);
+  --color-secondary-foreground: oklch(0.85 0.01 220);
+  --color-muted: oklch(0.18 0.01 240);
+  --color-muted-foreground: oklch(0.65 0.01 220);
+  --color-border: oklch(0.25 0.01 240);
+  --color-input: oklch(0.25 0.01 240);
+}
+
 * {
   border-color: var(--color-border);
 }
@@ -32,6 +44,7 @@ body {
   color: var(--color-foreground);
   font-family: 'DM Sans', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .font-mono {
@@ -64,10 +77,25 @@ body {
   color: rgb(51 65 85);
 }
 
+.dark .sidebar-nav-item-inactive {
+  color: rgb(148 163 184);
+}
+
+.dark .sidebar-nav-item-inactive:hover {
+  background-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
 .sidebar-nav-item-active {
   background-color: rgb(240 253 250);
   color: rgb(15 118 110);
   border: 1px solid rgb(204 251 241);
+}
+
+.dark .sidebar-nav-item-active {
+  background-color: rgb(6 78 59);
+  color: rgb(167 243 208);
+  border: 1px solid rgb(20 83 45);
 }
 
 .metric-card {
@@ -84,6 +112,15 @@ body {
 
 .metric-card:hover {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.dark .metric-card {
+  background-color: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+}
+
+.dark .metric-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
 }
 
 .btn-primary {
@@ -128,6 +165,16 @@ body {
   transform: scale(0.95);
 }
 
+.dark .btn-secondary {
+  background-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+  border-color: rgb(51 65 85);
+}
+
+.dark .btn-secondary:hover {
+  background-color: rgb(51 65 85);
+}
+
 .btn-danger {
   background-color: rgb(220 38 38);
   color: white;
@@ -154,6 +201,10 @@ body {
   margin-bottom: 0.25rem;
 }
 
+.dark .form-label {
+  color: rgb(203 213 225);
+}
+
 .form-input {
   width: 100%;
   padding: 0.625rem 0.75rem;
@@ -167,6 +218,12 @@ body {
   z-index: 1;
 }
 
+.dark .form-input {
+  background-color: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+  color: rgb(226 232 240);
+}
+
 /* Input with left icon - add more padding */
 .form-input-with-icon {
   padding-left: 2.75rem;
@@ -174,6 +231,10 @@ body {
 
 .form-input::placeholder {
   color: rgb(148 163 184);
+}
+
+.dark .form-input::placeholder {
+  color: rgb(100 116 139);
 }
 
 .form-input:focus {
@@ -266,6 +327,22 @@ body {
   background-color: rgb(248 250 252 / 0.7);
 }
 
+.dark .table-row {
+  border-bottom-color: rgb(51 65 85);
+}
+
+.dark .table-row:hover {
+  background-color: rgb(30 41 59 / 0.5);
+}
+
+.dark .table-cell {
+  color: rgb(203 213 225);
+}
+
+.dark .table-header {
+  color: rgb(148 163 184);
+}
+
 /* Scrollbar styles */
 .scrollbar-thin {
   scrollbar-width: thin;
@@ -308,4 +385,114 @@ body {
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(16px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* Global dark mode overrides for common patterns */
+
+/* Cards and containers with white backgrounds */
+.dark [class*="bg-white"]:not(.dark\:bg-) {
+  background-color: rgb(30 41 59) !important;
+}
+
+/* Borders */
+.dark [class*="border-slate-100"]:not(.dark\:border-) {
+  border-color: rgb(51 65 85) !important;
+}
+
+.dark [class*="border-slate-200"]:not(.dark\:border-) {
+  border-color: rgb(51 65 85) !important;
+}
+
+/* Text colors */
+.dark [class*="text-slate-800"]:not(.dark\:text-) {
+  color: rgb(203 213 225) !important;
+}
+
+.dark [class*="text-slate-700"]:not(.dark\:text-) {
+  color: rgb(203 213 225) !important;
+}
+
+.dark [class*="text-slate-600"]:not(.dark\:text-) {
+  color: rgb(148 163 184) !important;
+}
+
+.dark [class*="text-slate-500"]:not(.dark\:text-) {
+  color: rgb(148 163 184) !important;
+}
+
+/* Hover states */
+.dark [class*="hover:bg-slate-50"]:not(.dark\:hover\:bg-):hover {
+  background-color: rgb(51 65 85) !important;
+}
+
+.dark [class*="hover:bg-slate-100"]:not(.dark\:hover\:bg-):hover {
+  background-color: rgb(51 65 85) !important;
+}
+
+/* Focus states for inputs */
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  background-color: rgb(30 41 59);
+  border-color: rgb(15 118 110);
+  color: rgb(226 232 240);
+}
+
+/* Modals and overlays */
+.dark .shadow-modal,
+.dark .shadow-2xl,
+.dark .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+}
+
+/* Badge backgrounds */
+.dark .badge-active {
+  background-color: rgb(6 78 59 / 0.3);
+  color: rgb(167 243 208);
+  border-color: rgb(20 83 45);
+}
+
+.dark .badge-low-stock {
+  background-color: rgb(120 53 15 / 0.3);
+  color: rgb(253 230 138);
+  border-color: rgb(146 64 14);
+}
+
+.dark .badge-out-of-stock {
+  background-color: rgb(127 29 29 / 0.3);
+  color: rgb(254 202 202);
+  border-color: rgb(153 27 27);
+}
+
+.dark .badge-discontinued {
+  background-color: rgb(30 41 59 / 0.5);
+  color: rgb(148 163 184);
+  border-color: rgb(51 65 85);
+}
+
+.dark .badge-expiring {
+  background-color: rgb(124 45 18 / 0.3);
+  color: rgb(254 215 170);
+  border-color: rgb(154 52 18);
+}
+
+/* Select dropdowns */
+.dark select {
+  background-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+  border-color: rgb(51 65 85);
+}
+
+.dark select option {
+  background-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
+/* Scrollbar dark mode */
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(71 85 105);
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: rgb(71 85 105) transparent;
 }

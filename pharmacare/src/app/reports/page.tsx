@@ -150,8 +150,8 @@ export default function ReportsPage() {
     // Simulate export generation
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    console.log(`Exporting report as ${format}`);
     // In production, this would trigger actual export logic
+    // Export format: ${format}
     
     setIsGenerating(false);
   }, []);
@@ -257,7 +257,7 @@ export default function ReportsPage() {
                     </button>
                     <div className="border-t border-slate-100 my-2" />
                     <button
-                      onClick={() => console.log('Email report')}
+                      onClick={() => {/* Email report functionality */}}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
                     >
                       <Mail size={16} className="text-slate-600" />

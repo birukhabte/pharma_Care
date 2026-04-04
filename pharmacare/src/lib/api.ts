@@ -1,17 +1,17 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 class ApiClient {
-  private getAuthHeader() {
+  private getAuthHeader(): Record<string, string> {
     const token = localStorage.getItem('auth_token');
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...this.getAuthHeader(),
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     const response = await fetch(url, { ...options, headers });

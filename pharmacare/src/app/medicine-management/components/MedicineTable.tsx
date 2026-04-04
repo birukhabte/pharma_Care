@@ -41,7 +41,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 200,
     unitPrice: 0.85,
     costPrice: 0.58,
-    supplier: 'MedWholesale India',
+    supplier: 'Ethio Pharma Wholesale',
     status: 'active',
     dosageForm: 'Capsule',
     strength: '500mg',
@@ -60,7 +60,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 150,
     unitPrice: 0.42,
     costPrice: 0.28,
-    supplier: 'PharmaDist Co.',
+    supplier: 'Addis Medical Supply',
     status: 'low_stock',
     dosageForm: 'Tablet',
     strength: '850mg',
@@ -79,7 +79,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 180,
     unitPrice: 1.20,
     costPrice: 0.76,
-    supplier: 'MedWholesale India',
+    supplier: 'Ethio Pharma Wholesale',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '20mg',
@@ -98,7 +98,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 120,
     unitPrice: 0.65,
     costPrice: 0.40,
-    supplier: 'HealthSupply Hub',
+    supplier: 'Habesha Health Distributors',
     status: 'active',
     dosageForm: 'Capsule',
     strength: '20mg',
@@ -117,7 +117,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 100,
     unitPrice: 0.38,
     costPrice: 0.22,
-    supplier: 'PharmaDist Co.',
+    supplier: 'Addis Medical Supply',
     status: 'out_of_stock',
     dosageForm: 'Tablet',
     strength: '5mg',
@@ -136,7 +136,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 60,
     unitPrice: 2.40,
     costPrice: 1.55,
-    supplier: 'MedWholesale India',
+    supplier: 'Ethio Pharma Wholesale',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '500mg',
@@ -155,7 +155,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 80,
     unitPrice: 0.72,
     costPrice: 0.44,
-    supplier: 'HealthSupply Hub',
+    supplier: 'Habesha Health Distributors',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '40mg',
@@ -174,7 +174,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 200,
     unitPrice: 0.18,
     costPrice: 0.10,
-    supplier: 'PharmaDist Co.',
+    supplier: 'Addis Medical Supply',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '10mg',
@@ -193,7 +193,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 120,
     unitPrice: 0.95,
     costPrice: 0.60,
-    supplier: 'MedWholesale India',
+    supplier: 'Ethio Pharma Wholesale',
     status: 'low_stock',
     dosageForm: 'Tablet',
     strength: '50mg',
@@ -212,7 +212,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 500,
     unitPrice: 0.28,
     costPrice: 0.16,
-    supplier: 'HealthSupply Hub',
+    supplier: 'Habesha Health Distributors',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '650mg',
@@ -231,7 +231,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 80,
     unitPrice: 1.10,
     costPrice: 0.68,
-    supplier: 'PharmaDist Co.',
+    supplier: 'Addis Medical Supply',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '2mg',
@@ -250,7 +250,7 @@ const MOCK_MEDICINES: Medicine[] = [
     reorderLevel: 40,
     unitPrice: 1.80,
     costPrice: 1.10,
-    supplier: 'MedWholesale India',
+    supplier: 'Ethio Pharma Wholesale',
     status: 'active',
     dosageForm: 'Tablet',
     strength: '4mg',
@@ -262,7 +262,7 @@ const MOCK_MEDICINES: Medicine[] = [
 
 const CATEGORIES = ['All', 'Antibiotics', 'Antidiabetics', 'Cardiovascular', 'Gastrointestinal', 'Antihistamines', 'Analgesics'];
 const STATUSES = ['All', 'Active', 'Low Stock', 'Out of Stock', 'Discontinued'];
-const SUPPLIERS = ['All', 'MedWholesale India', 'PharmaDist Co.', 'HealthSupply Hub'];
+const SUPPLIERS = ['All', 'Ethio Pharma Wholesale', 'Addis Medical Supply', 'Habesha Health Distributors'];
 
 const ALL_COLUMNS = [
   { id: 'col-name', key: 'name', label: 'Medicine', alwaysVisible: true },
@@ -387,7 +387,10 @@ export default function MedicineTable() {
       const data = await api.getMedicines();
       setMedicines(data.map((m: any) => ({ ...m, id: m._id })));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to load medicines');
+      // If API fails, use mock data
+      console.log('API failed, using mock data:', error.message);
+      setMedicines(MOCK_MEDICINES);
+      toast.error('Using offline data - ' + (error.message || 'Failed to load medicines'));
     } finally {
       setLoading(false);
     }

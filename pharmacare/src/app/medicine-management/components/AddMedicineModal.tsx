@@ -32,7 +32,7 @@ type FormData = {
 const CATEGORIES = ['Antibiotics', 'Antidiabetics', 'Cardiovascular', 'Gastrointestinal', 'Antihistamines', 'Analgesics', 'Vitamins & Supplements', 'Dermatology', 'Respiratory', 'Neurology'];
 const DOSAGE_FORMS = ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Cream', 'Ointment', 'Drops', 'Inhaler', 'Patch', 'Suppository'];
 const SCHEDULES = ['OTC', 'H', 'H1', 'X', 'G'];
-const SUPPLIERS = ['MedWholesale India', 'PharmaDist Co.', 'HealthSupply Hub', 'NationalMed Distributors', 'CityPharma Suppliers'];
+const SUPPLIERS = ['Ethio Pharma Wholesale', 'Addis Medical Supply', 'Habesha Health Distributors', 'Ethiopian Drug Suppliers', 'Merkato Pharma Trading'];
 const GST_RATES = [0, 5, 12, 18];
 
 export default function AddMedicineModal({

@@ -82,8 +82,8 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
         body.style.color = '#e2e8f0'; // slate-200
       } else {
         html.classList.remove('dark');
-        body.style.backgroundColor = '';
-        body.style.color = '';
+        body.style.backgroundColor = '#f8fafc'; // slate-50 - light background
+        body.style.color = '#1e293b'; // slate-800 - dark text
       }
       // Theme applied successfully
     }

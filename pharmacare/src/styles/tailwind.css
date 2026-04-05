@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: oklch(0.97 0 0);
+  --color-background: oklch(0.99 0 0);
   --color-foreground: oklch(0.12 0.02 240);
   --color-primary: oklch(0.26 0.08 173);
   --color-primary-foreground: oklch(1 0 0);
-  --color-secondary: oklch(0.96 0.01 220);
+  --color-secondary: oklch(0.98 0.01 220);
   --color-secondary-foreground: oklch(0.30 0.02 222);
   --color-muted: oklch(0.96 0.01 220);
   --color-muted-foreground: oklch(0.52 0.01 220);
@@ -45,6 +45,16 @@ body {
   font-family: 'DM Sans', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Force light mode backgrounds */
+body:not(.dark) {
+  background-color: #f8fafc !important;
+}
+
+/* Force dark mode backgrounds */
+body.dark {
+  background-color: #0f172a !important;
 }
 
 .font-mono {

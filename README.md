@@ -2,6 +2,20 @@
 
 Full-stack pharmacy management application with Next.js frontend and Node.js/Express backend.
 
+## Screenshots
+
+### Login Screen
+![Login](pharmacare/public/assets/images/login.png)
+
+### Dashboard
+![Dashboard](pharmacare/public/assets/images/dashboard.png)
+
+### Sales Management
+![Sales](pharmacare/public/assets/images/sales.png)
+
+### Inventory Management
+![Inventory](pharmacare/public/assets/images/inventory.png)
+
 ## Project Structure
 
 ```
@@ -177,20 +191,76 @@ npm run dev
 
 ## Production Deployment
 
-### Backend
-1. Set `NODE_ENV=production` in `.env`
-2. Use a strong `JWT_SECRET`
-3. Use MongoDB Atlas production cluster
-4. Enable MongoDB authentication
-5. Restrict IP whitelist
-6. Add rate limiting
-7. Enable HTTPS
+### 🚀 Quick Deployment to Vercel
 
-### Frontend
-1. Build the application: `npm run build`
-2. Set production API URL in `.env`
-3. Deploy to Vercel, Netlify, or similar
-4. Configure environment variables in hosting platform
+**Total Time:** ~25 minutes | **Cost:** $0 (Free tier)
+
+#### Step 1: Setup MongoDB Atlas (10 min)
+1. Create free cluster at [MongoDB Atlas](https://mongodb.com/cloud/atlas)
+2. Create database user: `pharmacare_admin`
+3. Add network access: `0.0.0.0/0`
+4. Get connection string
+
+#### Step 2: Deploy Backend (10 min)
+1. Push code to GitHub
+2. Import to [Vercel](https://vercel.com)
+3. Set root directory: `server`
+4. Add environment variables:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - `NODE_ENV=production`
+   - `PORT=5001`
+5. Deploy and copy backend URL
+
+#### Step 3: Deploy Frontend (5 min)
+1. Import same repo to Vercel
+2. Set root directory: `pharmacare`
+3. Add environment variable:
+   - `NEXT_PUBLIC_API_URL=https://your-backend.vercel.app/api`
+4. Deploy and copy frontend URL
+
+#### Step 4: Configure CORS
+1. Add `CORS_ORIGIN` to backend with frontend URL
+2. Redeploy backend
+
+#### Step 5: Setup Database
+```bash
+cd server
+npm run migrate
+```
+
+#### Step 6: Create Admin User
+```bash
+curl -X POST https://your-backend.vercel.app/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@pharmacare.et",
+    "password": "Admin123!",
+    "fullName": "System Administrator",
+    "pharmacyName": "PharmaCare",
+    "role": "admin"
+  }'
+```
+
+### 📚 Detailed Deployment Guides
+
+- **Quick Start:** See `DEPLOY_BACKEND_QUICK.md` and `DEPLOY_FRONTEND_QUICK.md`
+- **Complete Guide:** See `DEPLOYMENT_COMPLETE_GUIDE.md` (step-by-step with screenshots)
+- **Troubleshooting:** See `TROUBLESHOOTING.md`
+- **Quick Reference:** See `DEPLOYMENT_QUICK_REFERENCE.md` (one-page cheat sheet)
+
+### 🔒 Production Security Checklist
+
+- [ ] Change default admin password
+- [ ] Use strong JWT_SECRET (32+ characters)
+- [ ] Enable 2FA on Vercel account
+- [ ] Enable 2FA on MongoDB Atlas
+- [ ] Configure MongoDB network access properly
+- [ ] Set up database backups
+- [ ] Monitor application logs
+- [ ] Configure rate limiting
+- [ ] Use HTTPS (automatic with Vercel)
+- [ ] Review and update CORS settings
 
 ## Troubleshooting
 

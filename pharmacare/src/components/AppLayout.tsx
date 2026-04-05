@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex transition-colors duration-200" style={{ backgroundColor: 'var(--page-bg)' }}>
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onMobileMenuToggle={() => setMobileOpen(!mobileOpen)}
           mobileMenuOpen={mobileOpen}
         />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900">
           <div className="max-w-screen-2xl mx-auto px-4 lg:px-6 xl:px-8 py-6">
             {children}
           </div>

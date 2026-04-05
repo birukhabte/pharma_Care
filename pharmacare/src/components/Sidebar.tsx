@@ -122,23 +122,28 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState('User');
   const [userInitials, setUserInitials] = useState('U');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     const role = getUserRole();
     setUserRole(role);
 
-    // Get user info from localStorage
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        setUserName(user.fullName || 'User');
-        const initials = user.fullName
-          ? user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
-          : 'U';
-        setUserInitials(initials);
-      } catch (e) {
-        // Ignore parse errors
+    // Get user info from localStorage - only on client
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setUserName(user.fullName || 'User');
+          const initials = user.fullName
+            ? user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+            : 'U';
+          setUserInitials(initials);
+        } catch (e) {
+          // Ignore parse errors
+        }
       }
     }
   }, []);
@@ -291,38 +296,40 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="border-t border-slate-100 dark:border-slate-700 p-2 flex-shrink-0">
-        {!collapsed ? (
-          <div 
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group"
-          >
-            <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
+      {mounted && (
+        <div className="border-t border-slate-100 dark:border-slate-700 p-2 flex-shrink-0">
+          {!collapsed ? (
+            <div 
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group"
+            >
+              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{userName}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                  {userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}
+                </p>
+              </div>
+              <LogOut
+                size={14}
+                className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{userName}</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-                {userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}
-              </p>
+          ) : (
+            <div 
+              onClick={handleLogout}
+              className="flex justify-center py-2" 
+              title={`${userName} — ${userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}`}
+            >
+              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center cursor-pointer hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
+                <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
+              </div>
             </div>
-            <LogOut
-              size={14}
-              className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            />
-          </div>
-        ) : (
-          <div 
-            onClick={handleLogout}
-            className="flex justify-center py-2" 
-            title={`${userName} — ${userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}`}
-          >
-            <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center cursor-pointer hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
-              <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Collapse Toggle */}
       <button

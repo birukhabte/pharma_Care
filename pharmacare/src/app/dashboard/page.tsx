@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import DashboardMetrics from './components/DashboardMetrics';
 import DashboardCharts from './components/DashboardCharts';
@@ -6,6 +8,35 @@ import RecentSalesTable from './components/RecentSalesTable';
 import ExpiryAlertList from './components/ExpiryAlertList';
 
 export default function DashboardPage() {
+  const [currentDateTime, setCurrentDateTime] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    const updateDateTime = () => {
+      const now = new Date();
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      };
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+      };
+      const dateStr = now.toLocaleDateString('en-US', dateOptions);
+      const timeStr = now.toLocaleTimeString('en-US', timeOptions);
+      setCurrentDateTime(`${dateStr} · Last updated ${timeStr}`);
+    };
+
+    updateDateTime();
+    const interval = setInterval(updateDateTime, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -13,9 +44,11 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Thursday, April 2, 2026 · Last updated 16:58
-            </p>
+            {mounted && (
+              <p className="text-sm text-slate-500 mt-0.5">
+                {currentDateTime}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full font-medium">

@@ -47,11 +47,15 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const [user, setUser] = useState<any>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentDateTime, setCurrentDateTime] = useState('');
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Update date and time every second
+  // Ensure component is mounted before accessing localStorage
   useEffect(() => {
+    setMounted(true);
+    
+    // Update date and time every second - only on client
     const updateDateTime = () => {
       const now = new Date();
       const options: Intl.DateTimeFormatOptions = {
@@ -160,9 +164,11 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
 
       <div className="flex items-center gap-2 ml-auto">
         {/* Date & Time */}
-        <span className="hidden md:block text-xs text-slate-400 dark:text-slate-500 font-mono">
-          {currentDateTime}
-        </span>
+        {mounted && (
+          <span className="hidden md:block text-xs text-slate-400 dark:text-slate-500 font-mono">
+            {currentDateTime}
+          </span>
+        )}
 
         {/* Theme Toggle */}
         <button

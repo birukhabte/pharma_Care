@@ -94,6 +94,16 @@ export default function SettingsPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [currentDate, setCurrentDate] = useState('');
+  const [currentDateTime, setCurrentDateTime] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+    const now = new Date();
+    setCurrentDate(now.toLocaleDateString());
+    setCurrentDateTime(`${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`);
+  }, []);
 
   // Pharmacy Settings
   const [pharmacySettings, setPharmacySettings] = useState<PharmacySettings>({
@@ -913,7 +923,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>Date:</span>
-                      <span className="font-medium">{new Date().toLocaleDateString()}</span>
+                      <span className="font-medium">{mounted ? currentDate : '...'}</span>
                     </div>
                   </div>
                   <div className="border-t border-slate-300 my-3"></div>
@@ -977,7 +987,7 @@ export default function SettingsPage() {
                     <div>
                       <p className="text-sm font-medium text-slate-800">Last Backup</p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                        {mounted ? currentDateTime : 'Loading...'}
                       </p>
                     </div>
                     <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">

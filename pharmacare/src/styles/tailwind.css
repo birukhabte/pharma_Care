@@ -187,6 +187,196 @@ html:not(.dark) [class*="shadow"] {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
 }
 
+/* ============================================ */
+/* DARK MODE - Force dark theme on everything */
+/* ============================================ */
+
+html.dark {
+  background-color: #0f172a !important;
+}
+
+html.dark body {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+/* Sidebar in dark mode */
+html.dark aside {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Topbar in dark mode */
+html.dark header {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Main content area in dark mode */
+html.dark main {
+  background-color: #0f172a !important;
+}
+
+/* All white/light backgrounds to dark */
+html.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Cards and containers in dark mode */
+html.dark [class*="bg-white"] {
+  background-color: #1e293b !important;
+}
+
+html.dark [class*="bg-slate-50"] {
+  background-color: #0f172a !important;
+}
+
+html.dark [class*="bg-slate-100"] {
+  background-color: #1e293b !important;
+}
+
+/* Buttons in dark mode */
+html.dark button:not(.btn-primary):not(.btn-danger) {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark button:not(.btn-primary):not(.btn-danger):hover {
+  background-color: #334155 !important;
+}
+
+/* Navigation items in dark mode */
+html.dark .sidebar-nav-item-inactive {
+  color: #94a3b8 !important;
+}
+
+html.dark .sidebar-nav-item-inactive:hover {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Text colors in dark mode */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Border colors in dark mode */
+html.dark .border-slate-200,
+html.dark .border-slate-100 {
+  border-color: #334155 !important;
+}
+
+html.dark .border-slate-300 {
+  border-color: #475569 !important;
+}
+
+/* Hover states in dark mode */
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover {
+  background-color: #334155 !important;
+}
+
+html.dark .hover\:bg-white:hover {
+  background-color: #334155 !important;
+}
+
+/* Inputs in dark mode */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  background-color: #1e293b !important;
+  border-color: #0f766e !important;
+}
+
+/* Modals and dropdowns in dark mode */
+html.dark [class*="shadow"] {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5) !important;
+}
+
+/* Tables in dark mode */
+html.dark table {
+  background-color: #1e293b !important;
+}
+
+html.dark thead {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+html.dark tbody tr {
+  border-color: #334155 !important;
+}
+
+html.dark tbody tr:hover {
+  background-color: #334155 !important;
+}
+
+/* Search inputs in dark mode */
+html.dark input[type="text"],
+html.dark input[type="search"] {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Notification dropdown in dark mode */
+html.dark [class*="bg-teal-50"] {
+  background-color: #134e4a !important;
+}
+
+/* Profile dropdown in dark mode */
+html.dark .bg-teal-100 {
+  background-color: #134e4a !important;
+}
+
+html.dark .text-teal-700 {
+  color: #5eead4 !important;
+}
+
+/* Dividers in dark mode */
+html.dark hr,
+html.dark .border-t,
+html.dark .border-b {
+  border-color: #334155 !important;
+}
+
 .font-mono {
   font-family: 'IBM Plex Mono', monospace;
 }

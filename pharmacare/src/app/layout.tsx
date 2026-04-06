@@ -33,10 +33,19 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('theme');
+                  var html = document.documentElement;
+                  var body = document.body;
+                  
                   if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
+                    html.classList.add('dark');
+                    body.classList.add('dark');
+                    html.style.backgroundColor = '#0f172a';
+                    body.style.backgroundColor = '#0f172a';
                   } else {
-                    document.documentElement.classList.remove('dark');
+                    html.classList.remove('dark');
+                    body.classList.remove('dark');
+                    html.style.backgroundColor = '#f8fafc';
+                    body.style.backgroundColor = '#f8fafc';
                   }
                 } catch (e) {}
               })();

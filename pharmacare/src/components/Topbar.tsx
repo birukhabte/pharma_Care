@@ -78,12 +78,25 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const applyTheme = React.useCallback((newTheme: 'light' | 'dark') => {
     if (typeof window !== 'undefined') {
       const html = document.documentElement;
+      const body = document.body;
       
       if (newTheme === 'dark') {
         html.classList.add('dark');
+        body.classList.add('dark');
+        // Force repaint
+        html.style.backgroundColor = '#0f172a';
+        body.style.backgroundColor = '#0f172a';
       } else {
         html.classList.remove('dark');
+        body.classList.remove('dark');
+        // Force repaint
+        html.style.backgroundColor = '#f8fafc';
+        body.style.backgroundColor = '#f8fafc';
       }
+      
+      // Force browser to recalculate styles
+      void html.offsetHeight;
+      void body.offsetHeight;
     }
   }, []);
 

@@ -123,6 +123,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [userName, setUserName] = useState('User');
   const [userInitials, setUserInitials] = useState('U');
   const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -145,6 +146,22 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           // Ignore parse errors
         }
       }
+      
+      // Check theme
+      const checkTheme = () => {
+        setIsDark(document.documentElement.classList.contains('dark'));
+      };
+      
+      checkTheme();
+      
+      // Watch for theme changes
+      const observer = new MutationObserver(checkTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+      
+      return () => observer.disconnect();
     }
   }, []);
 
@@ -176,6 +193,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
+      style={{
+        backgroundColor: !isDark ? '#ffffff' : '#1e293b'
+      }}
       className={`
         fixed left-0 top-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-30 flex flex-col
         transition-all duration-300 ease-in-out

@@ -47,9 +47,45 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* CRITICAL: Force sidebar to always be white in light mode */
+html:not(.dark) aside[class*="bg-white"] {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) aside[class*="bg-slate"] {
+  background-color: #ffffff !important;
+}
+
 /* ============================================ */
 /* LIGHT MODE - FORCE EVERYTHING WHITE/LIGHT */
 /* ============================================ */
+
+/* CRITICAL OVERRIDES - Must come first */
+html:not(.dark) aside {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) aside.bg-white,
+html:not(.dark) aside[class*="bg-white"],
+html:not(.dark) aside.bg-slate-800,
+html:not(.dark) aside[class*="bg-slate"] {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) header {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) header.bg-white,
+html:not(.dark) header[class*="bg-white"],
+html:not(.dark) header.bg-slate-800,
+html:not(.dark) header[class*="bg-slate"] {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) main {
+  background-color: #f8fafc !important;
+}
 
 html:not(.dark) {
   background-color: #f8fafc !important;
@@ -80,6 +116,42 @@ html:not(.dark) nav {
 html:not(.dark) aside {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
+}
+
+/* Force sidebar and all its children to be white */
+html:not(.dark) aside,
+html:not(.dark) aside > *,
+html:not(.dark) aside nav,
+html:not(.dark) aside div {
+  background-color: #ffffff !important;
+}
+
+/* Sidebar borders in light mode */
+html:not(.dark) aside .border-slate-100,
+html:not(.dark) aside .border-slate-700,
+html:not(.dark) aside [class*="border-slate"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Sidebar hover states in light mode */
+html:not(.dark) aside .hover\:bg-slate-50:hover,
+html:not(.dark) aside [class*="hover:bg-slate"]:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Sidebar text colors in light mode */
+html:not(.dark) aside .text-slate-800,
+html:not(.dark) aside .text-slate-700 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) aside .text-slate-400,
+html:not(.dark) aside .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html:not(.dark) aside .text-slate-200 {
+  color: #1e293b !important;
 }
 
 /* Topbar in light mode */

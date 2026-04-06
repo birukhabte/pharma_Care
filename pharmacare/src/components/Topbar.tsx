@@ -78,20 +78,12 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const applyTheme = React.useCallback((newTheme: 'light' | 'dark') => {
     if (typeof window !== 'undefined') {
       const html = document.documentElement;
-      const body = document.body;
       
       if (newTheme === 'dark') {
         html.classList.add('dark');
-        body.style.backgroundColor = '#0f172a'; // slate-900
-        body.style.color = '#e2e8f0'; // slate-200
-        html.style.setProperty('--page-bg', '#0f172a');
       } else {
         html.classList.remove('dark');
-        body.style.backgroundColor = '#f8fafc'; // slate-50 - light background
-        body.style.color = '#1e293b'; // slate-800 - dark text
-        html.style.setProperty('--page-bg', '#f8fafc');
       }
-      // Theme applied successfully
     }
   }, []);
 

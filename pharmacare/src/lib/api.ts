@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 class ApiClient {
   private getAuthHeader(): Record<string, string> {
@@ -157,6 +157,127 @@ class ApiClient {
   async deleteCustomer(id: string) {
     return this.request(`/customers/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Suppliers
+  async getSuppliers() {
+    return this.request('/suppliers');
+  }
+
+  async getSupplier(id: string) {
+    return this.request(`/suppliers/${id}`);
+  }
+
+  async createSupplier(supplier: any) {
+    return this.request('/suppliers', {
+      method: 'POST',
+      body: JSON.stringify(supplier),
+    });
+  }
+
+  async updateSupplier(id: string, supplier: any) {
+    return this.request(`/suppliers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(supplier),
+    });
+  }
+
+  async deleteSupplier(id: string) {
+    return this.request(`/suppliers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Prescriptions
+  async getPrescriptions() {
+    return this.request('/prescriptions');
+  }
+
+  async getPrescription(id: string) {
+    return this.request(`/prescriptions/${id}`);
+  }
+
+  async createPrescription(prescription: any) {
+    return this.request('/prescriptions', {
+      method: 'POST',
+      body: JSON.stringify(prescription),
+    });
+  }
+
+  async updatePrescription(id: string, prescription: any) {
+    return this.request('/prescriptions/${id}', {
+      method: 'PUT',
+      body: JSON.stringify(prescription),
+    });
+  }
+
+  async deletePrescription(id: string) {
+    return this.request(`/prescriptions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Products (Non-medicine inventory)
+  async getProducts() {
+    return this.request('/products');
+  }
+
+  async getProduct(id: string) {
+    return this.request(`/products/${id}`);
+  }
+
+  async createProduct(product: any) {
+    return this.request('/products', {
+      method: 'POST',
+      body: JSON.stringify(product),
+    });
+  }
+
+  async updateProduct(id: string, product: any) {
+    return this.request(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(product),
+    });
+  }
+
+  async deleteProduct(id: string) {
+    return this.request(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Orders
+  async getPendingOrders() {
+    return this.request('/orders/pending');
+  }
+
+  async getOrders(filters?: { status?: string; startDate?: string; endDate?: string }) {
+    const params = new URLSearchParams(filters as any);
+    return this.request(`/orders?${params}`);
+  }
+
+  async getOrder(id: string) {
+    return this.request(`/orders/${id}`);
+  }
+
+  async createOrder(order: any) {
+    return this.request('/orders', {
+      method: 'POST',
+      body: JSON.stringify(order),
+    });
+  }
+
+  async completeOrder(id: string, payment: any) {
+    return this.request(`/orders/${id}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(payment),
+    });
+  }
+
+  async cancelOrder(id: string) {
+    return this.request(`/orders/${id}/cancel`, {
+      method: 'POST',
     });
   }
 }

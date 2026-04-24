@@ -1,4 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import {
   DollarSign,
   AlertTriangle,
@@ -8,6 +12,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Loader2,
 } from 'lucide-react';
 
 interface MetricCardProps {
@@ -102,15 +107,54 @@ function MetricCard({ title, value, subtitle, trend, icon, variant, size = 'norm
 }
 
 export default function DashboardMetrics() {
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadMetrics();
+  }, []);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getDashboardMetrics();
+      setMetrics(data);
+    } catch (error: any) {
+      toast.error('Failed to load metrics');
+      // Use fallback data
+      setMetrics({
+        todayRevenue: '4821.60',
+        todayRevenueChange: 12.4,
+        totalOrders: 91,
+        lowStockItems: 7,
+        lowStockItemsChange: 2,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 size={32} className="animate-spin text-teal-600" />
+      </div>
+    );
+  }
+
   return (
     // 6 cards: grid-cols-3, 2 rows of 3
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4">
       {/* Hero: Daily Revenue */}
       <MetricCard
         title="Today's Revenue"
-        value="Br 4,821.60"
-        subtitle="Apr 2, 2026 · Counter + delivery"
-        trend={{ value: '+12.4%', direction: 'up', label: 'vs yesterday (Br 4,289.40)' }}
+        value={`Br ${parseFloat(metrics?.todayRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        subtitle={`${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · Counter + delivery`}
+        trend={{ 
+          value: `${parseFloat(metrics?.todayRevenueChange || 0) > 0 ? '+' : ''}${parseFloat(metrics?.todayRevenueChange || 0).toFixed(1)}%`, 
+          direction: parseFloat(metrics?.todayRevenueChange || 0) > 0 ? 'up' : parseFloat(metrics?.todayRevenueChange || 0) < 0 ? 'down' : 'neutral', 
+          label: 'vs yesterday' 
+        }}
         icon={<DollarSign size={20} />}
         variant="success"
         size="hero"
@@ -119,9 +163,13 @@ export default function DashboardMetrics() {
       {/* Low Stock Alerts */}
       <MetricCard
         title="Low Stock Alerts"
-        value="7"
+        value={String(metrics?.lowStockItems || 0)}
         subtitle="Medicines below reorder level"
-        trend={{ value: '+2', direction: 'down', label: 'vs 5 alerts yesterday' }}
+        trend={{ 
+          value: `${metrics?.lowStockItemsChange > 0 ? '+' : ''}${metrics?.lowStockItemsChange || 0}`, 
+          direction: metrics?.lowStockItemsChange > 0 ? 'down' : 'neutral', 
+          label: 'vs yesterday' 
+        }}
         icon={<AlertTriangle size={20} />}
         variant="danger"
       />
@@ -138,10 +186,14 @@ export default function DashboardMetrics() {
 
       {/* Prescriptions Dispensed */}
       <MetricCard
-        title="Rx Dispensed Today"
-        value="83"
-        subtitle="Prescriptions processed at counter"
-        trend={{ value: '+6', direction: 'up', label: 'vs 77 yesterday' }}
+        title="Orders Today"
+        value={String(metrics?.totalOrders || 0)}
+        subtitle="Transactions processed at counter"
+        trend={{ 
+          value: `${parseFloat(metrics?.totalOrdersChange || 0) > 0 ? '+' : ''}${parseFloat(metrics?.totalOrdersChange || 0).toFixed(1)}%`, 
+          direction: parseFloat(metrics?.totalOrdersChange || 0) > 0 ? 'up' : parseFloat(metrics?.totalOrdersChange || 0) < 0 ? 'down' : 'neutral', 
+          label: 'vs yesterday' 
+        }}
         icon={<ClipboardList size={20} />}
         variant="info"
       />
@@ -158,10 +210,14 @@ export default function DashboardMetrics() {
 
       {/* Gross Margin */}
       <MetricCard
-        title="Gross Margin Today"
-        value="Br 1,144.30"
-        subtitle="Revenue minus cost of goods"
-        trend={{ value: '23.7%', direction: 'up', label: 'Margin rate vs 21.2% avg' }}
+        title="Avg Order Value"
+        value={`Br ${parseFloat(metrics?.avgOrderValue || 0).toFixed(2)}`}
+        subtitle="Average transaction amount"
+        trend={{ 
+          value: `${parseFloat(metrics?.avgOrderValueChange || 0) > 0 ? '+' : ''}${parseFloat(metrics?.avgOrderValueChange || 0).toFixed(1)}%`, 
+          direction: parseFloat(metrics?.avgOrderValueChange || 0) > 0 ? 'up' : parseFloat(metrics?.avgOrderValueChange || 0) < 0 ? 'down' : 'neutral', 
+          label: 'vs yesterday' 
+        }}
         icon={<TrendingUp size={20} />}
         variant="default"
       />

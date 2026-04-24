@@ -30,6 +30,7 @@ const demoCredentials = [
   { role: 'Administrator', email: 'admin@pharmacare.et', password: 'password123' },
   { role: 'Pharmacist', email: 'pharmacist@pharmacare.et', password: 'password123' },
   { role: 'Inventory Manager', email: 'inventory@pharmacare.et', password: 'password123' },
+  { role: 'Cashier', email: 'cashier@pharmacare.et', password: 'password123' },
 ];
 
 function CopyButton({ text }: { text: string }) {

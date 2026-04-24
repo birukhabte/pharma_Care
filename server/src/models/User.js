@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ['pharmacist', 'inventory_manager', 'admin']
+    enum: ['pharmacist', 'inventory_manager', 'admin', 'cashier']
   }
 }, {
   timestamps: true

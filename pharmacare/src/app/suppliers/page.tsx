@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import {
   Truck,
   CheckCircle,
@@ -16,6 +18,7 @@ import {
   Star,
   ArrowUpDown,
   X,
+  Loader2,
 } from 'lucide-react';
 
 interface Supplier {
@@ -121,23 +124,57 @@ function AddSupplierModal({ onClose }: AddSupplierModalProps) {
 }
 
 export default function SuppliersPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortAsc, setSortAsc] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const activeCount = suppliersData.filter((s) => s.status === 'active').length;
-  const pendingCount = suppliersData.filter((s) => s.status === 'pending').length;
-  const inactiveCount = suppliersData.filter((s) => s.status === 'inactive').length;
-  const totalPendingOrders = suppliersData.reduce((sum, s) => sum + s.pendingOrders, 0);
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const loadSuppliers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getSuppliers();
+      // The API returns { suppliers: [...], totalPages, currentPage, total }
+      const data = response.suppliers || response;
+      setSuppliers(data.map((s: any) => ({
+        id: s._id,
+        name: s.name,
+        contactPerson: s.contactPerson,
+        phone: s.phone,
+        email: s.email,
+        city: s.address?.city || '',
+        category: s.category,
+        rating: s.rating || 0,
+        totalOrders: 0, // Not in database yet
+        pendingOrders: 0, // Not in database yet
+        lastOrderDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: s.status,
+      })));
+    } catch (error: any) {
+      toast.error('Using offline data - ' + (error.message || 'Failed to load suppliers'));
+      setSuppliers(suppliersData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activeCount = suppliers.filter((s) => s.status === 'active').length;
+  const pendingCount = suppliers.filter((s) => s.status === 'pending').length;
+  const inactiveCount = suppliers.filter((s) => s.status === 'inactive').length;
+  const totalPendingOrders = suppliers.reduce((sum, s) => sum + s.pendingOrders, 0);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
   };
 
-  const filtered = suppliersData
+  const filtered = suppliers
     .filter((s) => {
       const matchSearch =
         s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,6 +193,19 @@ export default function SuppliersPage() {
       if (valA > valB) return sortAsc ? 1 : -1;
       return 0;
     });
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="p-6 flex items-center justify-center h-96">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={32} className="animate-spin text-teal-600" />
+            <p className="text-sm text-slate-500">Loading suppliers...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const renderStars = (rating: number) => {
     return (

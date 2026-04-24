@@ -7,6 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/scripts/seedData.js",
+    "seed:all": "node src/scripts/seedAllData.js",
+    "seed:products": "node src/scripts/seedProducts.js",
     "migrate": "node src/scripts/migrate.js"
   },
   "keywords": ["pharmacy", "api", "express"],

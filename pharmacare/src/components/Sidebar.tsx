@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
     icon: <ShoppingCart size={18} />,
     group: 'main',
     resource: 'sales',
-    requiredRoles: ['admin', 'pharmacist'],
+    requiredRoles: ['admin', 'pharmacist', 'cashier'],
   },
   {
     id: 'nav-inventory',

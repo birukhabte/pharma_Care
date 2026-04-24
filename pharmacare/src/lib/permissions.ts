@@ -1,6 +1,6 @@
 // Frontend Role-Based Access Control
 
-export type Role = 'admin' | 'pharmacist' | 'inventory_manager';
+export type Role = 'admin' | 'pharmacist' | 'inventory_manager' | 'cashier';
 export type Resource = 'users' | 'medicines' | 'sales' | 'reports' | 'suppliers' | 'settings' | 'dashboard' | 'customers' | 'prescriptions' | 'inventory';
 export type Action = 'create' | 'read' | 'update' | 'delete' | 'export';
 
@@ -45,6 +45,20 @@ const PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     customers: [],
     prescriptions: [],
     inventory: ['create', 'read', 'update', 'delete']
+  },
+  
+  // Cashier - Sales and checkout
+  cashier: {
+    users: [],
+    medicines: ['read'],
+    sales: ['create', 'read'],
+    reports: [],
+    suppliers: [],
+    settings: [],
+    dashboard: ['read'],
+    customers: ['read'],
+    prescriptions: [],
+    inventory: ['read']
   }
 };
 
@@ -89,14 +103,16 @@ export const checkAccess = (resource: Resource, action: Action): boolean => {
 export const ROLE_LABELS: Record<Role, string> = {
   admin: 'Administrator',
   pharmacist: 'Pharmacist',
-  inventory_manager: 'Inventory Manager'
+  inventory_manager: 'Inventory Manager',
+  cashier: 'Cashier'
 };
 
 // Role descriptions
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   admin: 'Full system control - manage users, medicines, sales, and settings',
   pharmacist: 'Daily operations - view medicines, process sales, generate invoices',
-  inventory_manager: 'Stock management - add/update medicines, track inventory, monitor expiry'
+  inventory_manager: 'Stock management - add/update medicines, track inventory, monitor expiry',
+  cashier: 'Sales operations - process sales, view inventory, handle checkout'
 };
 
 // Custom hook for permissions

@@ -193,24 +193,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      style={{
-        backgroundColor: !isDark ? '#ffffff' : '#1e293b'
-      }}
       className={`
-        fixed left-0 top-0 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-30 flex flex-col
+        fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-30 flex flex-col
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-60'}
       `}
     >
       {/* Logo */}
       <div
-        className={`flex items-center h-16 border-b border-slate-100 dark:border-slate-700 px-3 flex-shrink-0 ${
+        className={`flex items-center h-16 border-b border-slate-100 px-3 flex-shrink-0 ${
           collapsed ? 'justify-center' : 'gap-2'
         }`}
       >
         <AppLogo size={32} />
         {!collapsed && (
-          <span className="font-semibold text-slate-800 dark:text-slate-200 text-base tracking-tight truncate">
+          <span className="font-semibold text-slate-800 text-base tracking-tight truncate">
             PharmaCare
           </span>
         )}
@@ -317,24 +314,24 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* User Profile */}
       {mounted && (
-        <div className="border-t border-slate-100 dark:border-slate-700 p-2 flex-shrink-0">
+        <div className="border-t border-slate-100 p-2 flex-shrink-0">
           {!collapsed ? (
             <div 
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 cursor-pointer group"
             >
-              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
+              <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-teal-700">{userInitials}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{userName}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
+                <p className="text-sm font-medium text-slate-800 truncate">{userName}</p>
+                <p className="text-xs text-slate-400 truncate">
                   {userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}
                 </p>
               </div>
               <LogOut
                 size={14}
-                className="text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
               />
             </div>
           ) : (
@@ -343,8 +340,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className="flex justify-center py-2" 
               title={`${userName} — ${userRole ? ROLE_LABELS[userRole as keyof typeof ROLE_LABELS] : 'User'}`}
             >
-              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center cursor-pointer hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
-                <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">{userInitials}</span>
+              <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center cursor-pointer hover:bg-teal-200 transition-colors">
+                <span className="text-sm font-semibold text-teal-700">{userInitials}</span>
               </div>
             </div>
           )}
@@ -354,13 +351,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center shadow-sm hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:border-teal-300 dark:hover:border-teal-700 transition-all duration-150 z-10"
+        className="absolute -right-3 top-20 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:bg-teal-50 hover:border-teal-300 transition-all duration-150 z-10"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         {collapsed ? (
-          <ChevronRight size={12} className="text-slate-500 dark:text-slate-400" />
+          <ChevronRight size={12} className="text-slate-500" />
         ) : (
-          <ChevronLeft size={12} className="text-slate-500 dark:text-slate-400" />
+          <ChevronLeft size={12} className="text-slate-500" />
         )}
       </button>
     </aside>

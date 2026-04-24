@@ -30,30 +30,12 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme');
-                  var html = document.documentElement;
-                  var body = document.body;
-                  
-                  if (theme === 'dark') {
-                    html.classList.add('dark');
-                    body.classList.add('dark');
-                    html.style.backgroundColor = '#0f172a';
-                    body.style.backgroundColor = '#0f172a';
-                  } else {
-                    html.classList.remove('dark');
-                    body.classList.remove('dark');
-                    html.style.backgroundColor = '#f8fafc';
-                    body.style.backgroundColor = '#f8fafc';
-                  }
-                } catch (e) {}
-              })();
+              // No theme script needed - using light theme only
             `,
           }}
         />
       </head>
-      <body>
+      <body className="h-full bg-slate-50 text-slate-900">
         {children}
         <Toaster
           position="bottom-right"

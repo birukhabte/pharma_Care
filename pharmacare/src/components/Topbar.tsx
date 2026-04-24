@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Menu, X, ChevronDown, LogOut, Sun, Moon } from 'lucide-react';
+import { Bell, Search, Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
@@ -45,7 +45,6 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [currentDateTime, setCurrentDateTime] = useState('');
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -75,54 +74,15 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
     return () => clearInterval(interval);
   }, []);
 
-  const applyTheme = React.useCallback((newTheme: 'light' | 'dark') => {
-    if (typeof window !== 'undefined') {
-      const html = document.documentElement;
-      const body = document.body;
-      
-      if (newTheme === 'dark') {
-        html.classList.add('dark');
-        body.classList.add('dark');
-        // Force repaint
-        html.style.backgroundColor = '#0f172a';
-        body.style.backgroundColor = '#0f172a';
-      } else {
-        html.classList.remove('dark');
-        body.classList.remove('dark');
-        // Force repaint
-        html.style.backgroundColor = '#f8fafc';
-        body.style.backgroundColor = '#f8fafc';
-      }
-      
-      // Force browser to recalculate styles
-      void html.offsetHeight;
-      void body.offsetHeight;
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme);
-    }
-    applyTheme(newTheme);
-  };
-
-  // Load user data and theme on client side only
+  // Load user data on client side only
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       if (userData) {
         setUser(JSON.parse(userData));
       }
-      
-      // Load theme from localStorage
-      const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
-      setTheme(savedTheme);
-      applyTheme(savedTheme);
     }
-  }, [applyTheme]);
+  }, []);
 
   const handleLogout = () => {
     api.logout();
@@ -139,14 +99,14 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const getUserRole = () => user?.role?.replace('_', ' ') || 'Administrator';
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20 transition-colors duration-200">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20">
       {/* Mobile menu toggle */}
       <button
-        className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
         onClick={onMobileMenuToggle}
         aria-label="Toggle menu"
       >
-        {mobileMenuOpen ? <X size={20} className="text-slate-600 dark:text-slate-300" /> : <Menu size={20} className="text-slate-600 dark:text-slate-300" />}
+        {mobileMenuOpen ? <X size={20} className="text-slate-600" /> : <Menu size={20} className="text-slate-600" />}
       </button>
 
       {/* Search */}
@@ -154,14 +114,14 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
         <div className="relative">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />
           <input
             type="text"
             placeholder="Search medicines, invoices, suppliers..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all text-slate-900 placeholder:text-slate-400"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
             ⌘K
           </kbd>
         </div>
@@ -170,54 +130,40 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
       <div className="flex items-center gap-2 ml-auto">
         {/* Date & Time */}
         {mounted && (
-          <span className="hidden md:block text-xs text-slate-400 dark:text-slate-500 font-mono">
+          <span className="hidden md:block text-xs text-slate-400 font-mono">
             {currentDateTime}
           </span>
         )}
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-          aria-label="Toggle theme"
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? (
-            <Moon size={18} className="text-slate-600 dark:text-slate-300" />
-          ) : (
-            <Sun size={18} className="text-slate-600 dark:text-slate-300" />
-          )}
-        </button>
 
         {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors"
             aria-label="Notifications"
           >
-            <Bell size={18} className="text-slate-600 dark:text-slate-300" />
+            <Bell size={18} className="text-slate-600" />
             {unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
             )}
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-modal animate-fade-in z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Notifications</h3>
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-modal animate-fade-in z-50">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
                     {unreadCount} new
                   </span>
                 )}
               </div>
-              <ul className="divide-y divide-slate-50 dark:divide-slate-700 max-h-72 overflow-y-auto scrollbar-thin">
+              <ul className="divide-y divide-slate-50 max-h-72 overflow-y-auto scrollbar-thin">
                 {notifications.map((n) => (
                   <li
                     key={n.id}
-                    className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors ${
-                      !n.read ? 'bg-teal-50/40 dark:bg-teal-900/20' : ''
+                    className={`px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${
+                      !n.read ? 'bg-teal-50/40' : ''
                     }`}
                   >
                     <div className="flex items-start gap-2.5">
@@ -228,15 +174,15 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
                         }`}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{n.message}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{n.time}</p>
+                        <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{n.time}</p>
                       </div>
                     </div>
                   </li>
                 ))}
               </ul>
-              <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 text-center">
-                <button className="text-xs text-teal-600 dark:text-teal-400 font-medium hover:text-teal-700 dark:hover:text-teal-300 transition-colors">
+              <div className="px-4 py-2.5 border-t border-slate-100 text-center">
+                <button className="text-xs text-teal-600 font-medium hover:text-teal-700 transition-colors">
                   View all notifications
                 </button>
               </div>
@@ -248,17 +194,17 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
         <div className="relative">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center">
-              <span className="text-xs font-semibold text-teal-700 dark:text-teal-300">
+            <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center">
+              <span className="text-xs font-semibold text-teal-700">
                 {getUserInitials()}
               </span>
             </div>
-            <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="hidden md:block text-sm font-medium text-slate-700">
               {getUserName()}
             </span>
-            <ChevronDown size={14} className="hidden md:block text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={14} className="hidden md:block text-slate-400" />
           </button>
 
           {/* Profile dropdown */}
@@ -268,22 +214,22 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
                 className="fixed inset-0 z-10"
                 onClick={() => setProfileOpen(false)}
               />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-modal z-20 animate-fade-in overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-modal z-20 animate-fade-in overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-800">
                     {getUserName()}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {getUserEmail()}
                   </p>
-                  <p className="text-xs text-teal-600 dark:text-teal-400 font-medium mt-1 capitalize">
+                  <p className="text-xs text-teal-600 font-medium mt-1 capitalize">
                     {getUserRole()}
                   </p>
                 </div>
                 <div className="p-2">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={15} />
                     <span>Sign Out</span>

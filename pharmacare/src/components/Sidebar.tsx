@@ -83,15 +83,6 @@ const navItems: NavItem[] = [
     resource: 'reports',
   },
   {
-    id: 'nav-customers',
-    label: 'Customers',
-    href: '/customers',
-    icon: <Users size={18} />,
-    group: 'analytics',
-    resource: 'customers',
-    requiredRoles: ['admin', 'pharmacist'],
-  },
-  {
     id: 'nav-users',
     label: 'User Management',
     href: '/users',

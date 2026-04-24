@@ -1,66 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, ChevronRight } from 'lucide-react';
-
-const expiryAlerts = [
-  {
-    id: 'batch-exp-001',
-    medicine: 'Amoxicillin 500mg',
-    batchNo: 'AMX-2024-B14',
-    expiryDate: 'Apr 14, 2026',
-    daysLeft: 12,
-    qty: 240,
-    severity: 'critical',
-  },
-  {
-    id: 'batch-exp-002',
-    medicine: 'Metronidazole 400mg',
-    batchNo: 'MTZ-2024-C08',
-    expiryDate: 'Apr 18, 2026',
-    daysLeft: 16,
-    qty: 180,
-    severity: 'critical',
-  },
-  {
-    id: 'batch-exp-003',
-    medicine: 'Ciprofloxacin 250mg',
-    batchNo: 'CIP-2025-A03',
-    expiryDate: 'Apr 22, 2026',
-    daysLeft: 20,
-    qty: 96,
-    severity: 'warning',
-  },
-  {
-    id: 'batch-exp-004',
-    medicine: 'Ranitidine 150mg',
-    batchNo: 'RAN-2025-D11',
-    expiryDate: 'Apr 25, 2026',
-    daysLeft: 23,
-    qty: 320,
-    severity: 'warning',
-  },
-  {
-    id: 'batch-exp-005',
-    medicine: 'Ibuprofen 400mg',
-    batchNo: 'IBU-2025-B07',
-    expiryDate: 'Apr 28, 2026',
-    daysLeft: 26,
-    qty: 144,
-    severity: 'warning',
-  },
-  {
-    id: 'batch-exp-006',
-    medicine: 'Paracetamol 500mg',
-    batchNo: 'PCM-2025-C19',
-    expiryDate: 'May 2, 2026',
-    daysLeft: 30,
-    qty: 480,
-    severity: 'info',
-  },
-];
+import { api } from '@/lib/api';
 
 export default function ExpiryAlertList() {
+  const [expiryAlerts, setExpiryAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadExpiryAlerts();
+  }, []);
+
+  const loadExpiryAlerts = async () => {
+    try {
+      const data = await api.getExpiryAlerts();
+      setExpiryAlerts(data || []);
+    } catch (error) {
+      console.error('Failed to load expiry alerts:', error);
+      setExpiryAlerts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
@@ -74,7 +36,16 @@ export default function ExpiryAlertList() {
         <span className="badge badge-low-stock">{expiryAlerts?.length}</span>
       </div>
       <ul className="divide-y divide-slate-50 max-h-[340px] overflow-y-auto scrollbar-thin">
-        {expiryAlerts?.map((alert) => (
+        {loading ? (
+          <li className="px-5 py-8 text-center text-xs text-slate-400">
+            Loading expiry alerts...
+          </li>
+        ) : expiryAlerts.length === 0 ? (
+          <li className="px-5 py-8 text-center text-xs text-slate-400">
+            No expiring batches in the next 30 days
+          </li>
+        ) : (
+          expiryAlerts?.map((alert) => (
           <li
             key={alert?.id}
             className="px-5 py-3.5 hover:bg-slate-50 cursor-pointer transition-colors group"
@@ -113,7 +84,8 @@ export default function ExpiryAlertList() {
               />
             </div>
           </li>
-        ))}
+        ))
+        )}
       </ul>
       <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50">
         <button className="text-xs text-teal-600 font-medium hover:text-teal-700 transition-colors w-full text-center">

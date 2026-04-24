@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { api } from '@/lib/api';
 import {
   Package,
   AlertTriangle,
@@ -11,7 +12,13 @@ import {
   Filter,
   RefreshCw,
   ArrowUpDown,
+  Pill,
+  ShoppingBag,
+  Plus,
+  X,
 } from 'lucide-react';
+
+type ItemType = 'medicine' | 'non-medicine';
 
 interface InventoryItem {
   id: string;
@@ -25,22 +32,8 @@ interface InventoryItem {
   location: string;
   lastRestocked: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock' | 'overstocked';
+  type: ItemType;
 }
-
-const inventoryData: InventoryItem[] = [
-  { id: 'INV001', name: 'Paracetamol 500mg', category: 'Analgesics', sku: 'PCM-500', currentStock: 1200, minStock: 200, maxStock: 2000, unit: 'Tablets', location: 'Shelf A1', lastRestocked: '2026-03-28', status: 'in-stock' },
-  { id: 'INV002', name: 'Amoxicillin 250mg', category: 'Antibiotics', sku: 'AMX-250', currentStock: 85, minStock: 100, maxStock: 500, unit: 'Capsules', location: 'Shelf B2', lastRestocked: '2026-03-15', status: 'low-stock' },
-  { id: 'INV003', name: 'Metformin 500mg', category: 'Antidiabetics', sku: 'MET-500', currentStock: 0, minStock: 150, maxStock: 800, unit: 'Tablets', location: 'Shelf C1', lastRestocked: '2026-02-20', status: 'out-of-stock' },
-  { id: 'INV004', name: 'Atorvastatin 10mg', category: 'Statins', sku: 'ATV-010', currentStock: 640, minStock: 100, maxStock: 600, unit: 'Tablets', location: 'Shelf A3', lastRestocked: '2026-03-30', status: 'overstocked' },
-  { id: 'INV005', name: 'Omeprazole 20mg', category: 'Antacids', sku: 'OMP-020', currentStock: 320, minStock: 100, maxStock: 500, unit: 'Capsules', location: 'Shelf D2', lastRestocked: '2026-03-22', status: 'in-stock' },
-  { id: 'INV006', name: 'Cetirizine 10mg', category: 'Antihistamines', sku: 'CTZ-010', currentStock: 60, minStock: 80, maxStock: 400, unit: 'Tablets', location: 'Shelf B4', lastRestocked: '2026-03-10', status: 'low-stock' },
-  { id: 'INV007', name: 'Azithromycin 500mg', category: 'Antibiotics', sku: 'AZT-500', currentStock: 180, minStock: 50, maxStock: 300, unit: 'Tablets', location: 'Shelf B1', lastRestocked: '2026-03-25', status: 'in-stock' },
-  { id: 'INV008', name: 'Losartan 50mg', category: 'Antihypertensives', sku: 'LST-050', currentStock: 0, minStock: 120, maxStock: 600, unit: 'Tablets', location: 'Shelf C3', lastRestocked: '2026-02-14', status: 'out-of-stock' },
-  { id: 'INV009', name: 'Vitamin D3 1000IU', category: 'Vitamins', sku: 'VTD-1K', currentStock: 950, minStock: 200, maxStock: 1000, unit: 'Softgels', location: 'Shelf E1', lastRestocked: '2026-03-29', status: 'in-stock' },
-  { id: 'INV010', name: 'Ibuprofen 400mg', category: 'NSAIDs', sku: 'IBU-400', currentStock: 45, minStock: 150, maxStock: 700, unit: 'Tablets', location: 'Shelf A2', lastRestocked: '2026-03-05', status: 'low-stock' },
-  { id: 'INV011', name: 'Pantoprazole 40mg', category: 'Antacids', sku: 'PNT-040', currentStock: 275, minStock: 80, maxStock: 400, unit: 'Tablets', location: 'Shelf D1', lastRestocked: '2026-03-18', status: 'in-stock' },
-  { id: 'INV012', name: 'Salbutamol Inhaler', category: 'Bronchodilators', sku: 'SLB-INH', currentStock: 30, minStock: 40, maxStock: 150, unit: 'Units', location: 'Shelf F2', lastRestocked: '2026-03-12', status: 'low-stock' },
-];
 
 const statusConfig = {
   'in-stock': { label: 'In Stock', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
@@ -52,29 +45,208 @@ const statusConfig = {
 type SortKey = 'name' | 'currentStock' | 'category' | 'lastRestocked';
 
 export default function InventoryPage() {
+  const [activeTab, setActiveTab] = useState<ItemType>('medicine');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortAsc, setSortAsc] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [medicines, setMedicines] = useState<InventoryItem[]>([]);
+  const [products, setProducts] = useState<InventoryItem[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    sku: '',
+    currentStock: '',
+    minStock: '',
+    maxStock: '',
+    unit: '',
+    location: '',
+  });
 
-  const totalItems = inventoryData.length;
-  const inStockCount = inventoryData.filter((i) => i.status === 'in-stock').length;
-  const lowStockCount = inventoryData.filter((i) => i.status === 'low-stock').length;
-  const outOfStockCount = inventoryData.filter((i) => i.status === 'out-of-stock').length;
+  // Load data when tab changes
+  useEffect(() => {
+    if (activeTab === 'medicine') {
+      loadMedicines();
+    } else {
+      loadProducts();
+    }
+  }, [activeTab]);
+
+  const loadMedicines = async () => {
+    setLoading(true);
+    try {
+      const response = await api.getMedicines();
+      const data = response.medicines || response;
+      
+      // Map medicines to inventory item format
+      const mappedMedicines: InventoryItem[] = data.map((med: any) => ({
+        id: med._id,
+        name: med.name,
+        category: med.category || 'General',
+        sku: med.sku || med._id.slice(-6).toUpperCase(),
+        currentStock: med.stock || 0,
+        minStock: med.minStock || 0,
+        maxStock: med.maxStock || 1000,
+        unit: med.unit || 'Units',
+        location: med.location || 'Warehouse',
+        lastRestocked: med.lastRestocked || new Date().toISOString().split('T')[0],
+        status: calculateStatus(med.stock || 0, med.minStock || 0, med.maxStock || 1000),
+        type: 'medicine'
+      }));
+      
+      setMedicines(mappedMedicines);
+    } catch (error) {
+      console.error('Failed to load medicines:', error);
+      // Keep empty array on error
+      setMedicines([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await api.getProducts();
+      const data = response.products || response;
+      
+      // Map products to inventory item format
+      const mappedProducts: InventoryItem[] = data.map((prod: any) => ({
+        id: prod._id,
+        name: prod.name,
+        category: prod.category,
+        sku: prod.sku,
+        currentStock: prod.currentStock,
+        minStock: prod.minStock,
+        maxStock: prod.maxStock,
+        unit: prod.unit,
+        location: prod.location,
+        lastRestocked: prod.lastRestocked ? new Date(prod.lastRestocked).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: prod.status,
+        type: 'non-medicine'
+      }));
+      
+      setProducts(mappedProducts);
+    } catch (error) {
+      console.error('Failed to load products:', error);
+      // Keep empty array on error
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateStatus = (current: number, min: number, max: number): InventoryItem['status'] => {
+    if (current === 0) return 'out-of-stock';
+    if (current < min) return 'low-stock';
+    if (current > max) return 'overstocked';
+    return 'in-stock';
+  };
+
+  // Reset category filter when switching tabs
+  const handleTabChange = (tab: ItemType) => {
+    setActiveTab(tab);
+    setCategoryFilter('all');
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const itemData = {
+        name: formData.name,
+        category: formData.category,
+        sku: formData.sku,
+        currentStock: parseInt(formData.currentStock),
+        minStock: parseInt(formData.minStock),
+        maxStock: parseInt(formData.maxStock),
+        unit: formData.unit,
+        location: formData.location,
+      };
+
+      if (activeTab === 'medicine') {
+        // For medicines, use medicine API
+        await api.createMedicine({
+          ...itemData,
+          stock: itemData.currentStock,
+        });
+        await loadMedicines();
+      } else {
+        // For products, use product API
+        await api.createProduct(itemData);
+        await loadProducts();
+      }
+
+      // Reset form and close modal
+      setFormData({
+        name: '',
+        category: '',
+        sku: '',
+        currentStock: '',
+        minStock: '',
+        maxStock: '',
+        unit: '',
+        location: '',
+      });
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      alert('Failed to add item. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryOptions = () => {
+    if (activeTab === 'medicine') {
+      return [
+        'Analgesics',
+        'Antibiotics',
+        'Antidiabetics',
+        'Statins',
+        'Antacids',
+        'Antihistamines',
+        'NSAIDs',
+        'Vitamins',
+        'Antihypertensives',
+        'Bronchodilators',
+      ];
+    } else {
+      return [
+        'Medical Supplies',
+        'Personal Care',
+        'Cosmetics',
+        'Baby Care',
+      ];
+    }
+  };
+
+  // Get data based on active tab
+  const tabFilteredData = activeTab === 'medicine' ? medicines : products;
+
+  const totalItems = tabFilteredData.length;
+  const inStockCount = tabFilteredData.filter((i) => i.status === 'in-stock').length;
+  const lowStockCount = tabFilteredData.filter((i) => i.status === 'low-stock').length;
+  const outOfStockCount = tabFilteredData.filter((i) => i.status === 'out-of-stock').length;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
   };
 
-  const filtered = inventoryData
+  const filtered = tabFilteredData
     .filter((item) => {
       const matchSearch =
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
       const matchStatus = filterStatus === 'all' || item.status === filterStatus;
-      return matchSearch && matchStatus;
+      const matchCategory = categoryFilter === 'all' || item.category === categoryFilter;
+      return matchSearch && matchStatus && matchCategory;
     })
     .sort((a, b) => {
       let valA: string | number = a[sortKey];
@@ -106,14 +278,113 @@ export default function InventoryPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Inventory</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Track stock levels, locations, and restock alerts</p>
+            <h1 className="text-2xl font-bold text-slate-800">Inventory Management</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Track medicines, medical supplies, and other pharmacy products</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">
-            <RefreshCw size={15} />
-            Sync Stock
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowAddModal(true)}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus size={15} />
+              Add Item
+            </button>
+            <button 
+              onClick={() => activeTab === 'medicine' ? loadMedicines() : loadProducts()}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              Sync Stock
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-slate-200">
+          <button
+            onClick={() => handleTabChange('medicine')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'medicine'
+                ? 'border-teal-600 text-teal-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Pill size={16} />
+            Medicines
+          </button>
+          <button
+            onClick={() => handleTabChange('non-medicine')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'non-medicine'
+                ? 'border-teal-600 text-teal-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <ShoppingBag size={16} />
+            Other Products
           </button>
         </div>
+
+        {/* Category Filter for Other Products */}
+        {activeTab === 'non-medicine' && (
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-slate-700">Filter by Category:</span>
+              <button
+                onClick={() => setCategoryFilter('all')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  categoryFilter === 'all'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All Categories
+              </button>
+              <button
+                onClick={() => setCategoryFilter('Medical Supplies')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  categoryFilter === 'Medical Supplies'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Medical Supplies
+              </button>
+              <button
+                onClick={() => setCategoryFilter('Personal Care')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  categoryFilter === 'Personal Care'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Personal Care & Hygiene
+              </button>
+              <button
+                onClick={() => setCategoryFilter('Cosmetics')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  categoryFilter === 'Cosmetics'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Cosmetics & Beauty
+              </button>
+              <button
+                onClick={() => setCategoryFilter('Baby Care')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  categoryFilter === 'Baby Care'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Baby Care
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -193,7 +464,7 @@ export default function InventoryPage() {
                 <tr className="border-b border-slate-100 bg-slate-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <button className="flex items-center gap-1 hover:text-slate-700" onClick={() => handleSort('name')}>
-                      Medicine <ArrowUpDown size={12} />
+                      Product Name <ArrowUpDown size={12} />
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -216,10 +487,19 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td colSpan={6} className="text-center py-12 text-slate-400">
-                      No inventory items match your search.
+                      <RefreshCw size={20} className="animate-spin inline-block mr-2" />
+                      Loading inventory...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-slate-400">
+                      {tabFilteredData.length === 0 
+                        ? `No ${activeTab === 'medicine' ? 'medicines' : 'products'} found. Click "Add Item" to get started.`
+                        : 'No inventory items match your search.'}
                     </td>
                   </tr>
                 ) : (
@@ -264,6 +544,182 @@ export default function InventoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Item Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  Add New {activeTab === 'medicine' ? 'Medicine' : 'Product'}
+                </h2>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Fill in the details to add a new inventory item
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleAddItem} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Product Name */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Product Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Paracetamol 500mg"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  >
+                    <option value="">Select category</option>
+                    {getCategoryOptions().map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* SKU */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    SKU <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="e.g., PCM-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Current Stock */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Current Stock <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.currentStock}
+                    onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Min Stock */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Minimum Stock <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.minStock}
+                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Max Stock */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Maximum Stock <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.maxStock}
+                    onChange={(e) => setFormData({ ...formData, maxStock: e.target.value })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Unit */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Unit <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.unit}
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    placeholder="e.g., Tablets, Bottles, Pieces"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
+                {/* Location */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Storage Location <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g., Shelf A1"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Adding...' : 'Add Item'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

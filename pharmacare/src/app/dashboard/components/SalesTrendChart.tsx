@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -10,31 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-const data7Days = [
-  { day: 'Mar 27', revenue: 3820, transactions: 61 },
-  { day: 'Mar 28', revenue: 4210, transactions: 68 },
-  { day: 'Mar 29', revenue: 2940, transactions: 49 },
-  { day: 'Mar 30', revenue: 3680, transactions: 59 },
-  { day: 'Mar 31', revenue: 5120, transactions: 82 },
-  { day: 'Apr 1', revenue: 4289, transactions: 72 },
-  { day: 'Apr 2', revenue: 4821, transactions: 83 },
-];
-
-const data30Days = [
-  { day: 'Mar 4', revenue: 2800, transactions: 45 },
-  { day: 'Mar 7', revenue: 3100, transactions: 51 },
-  { day: 'Mar 10', revenue: 2650, transactions: 43 },
-  { day: 'Mar 13', revenue: 4100, transactions: 66 },
-  { day: 'Mar 16', revenue: 3800, transactions: 62 },
-  { day: 'Mar 19', revenue: 4500, transactions: 74 },
-  { day: 'Mar 22', revenue: 3200, transactions: 52 },
-  { day: 'Mar 25', revenue: 4800, transactions: 78 },
-  { day: 'Mar 28', revenue: 4210, transactions: 68 },
-  { day: 'Mar 31', revenue: 5120, transactions: 82 },
-  { day: 'Apr 1', revenue: 4289, transactions: 72 },
-  { day: 'Apr 2', revenue: 4821, transactions: 83 },
-];
+import { api } from '@/lib/api';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -51,7 +27,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         <div key={`tooltip-item-${i}`} className="flex items-center justify-between gap-4">
           <span className="text-xs text-slate-500 capitalize">{p.name === 'revenue' ? 'Revenue' : 'Rx Count'}</span>
           <span className="text-xs font-bold text-slate-800 font-mono tabular-nums">
-            {p.name === 'revenue' ? `$${p.value.toLocaleString()}` : p.value}
+            {p.name === 'revenue' ? `${p.value.toLocaleString()}` : p.value}
           </span>
         </div>
       ))}
@@ -61,7 +37,26 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export default function SalesTrendChart() {
   const [range, setRange] = useState<'7d' | '30d'>('7d');
-  const data = range === '7d' ? data7Days : data30Days;
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSalesTrend();
+  }, [range]);
+
+  const loadSalesTrend = async () => {
+    setLoading(true);
+    try {
+      const response = await api.getSalesTrend();
+      const trendData = response.trend || response || [];
+      setData(trendData);
+    } catch (error) {
+      console.error('Failed to load sales trend:', error);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-card">
@@ -87,39 +82,49 @@ export default function SalesTrendChart() {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-          <defs>
-            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(173, 83%, 26%)" stopOpacity={0.18} />
-              <stop offset="95%" stopColor="hsl(173, 83%, 26%)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 90%)" vertical={false} />
-          <XAxis
-            dataKey="day"
-            tick={{ fontSize: 11, fill: 'hsl(220, 9%, 52%)' }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fill: 'hsl(220, 9%, 52%)' }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Area
-            type="monotone"
-            dataKey="revenue"
-            stroke="hsl(173, 83%, 26%)"
-            strokeWidth={2}
-            fill="url(#revenueGradient)"
-            dot={false}
-            activeDot={{ r: 4, fill: 'hsl(173, 83%, 26%)', strokeWidth: 0 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {loading ? (
+        <div className="h-[220px] flex items-center justify-center text-xs text-slate-400">
+          Loading sales trend...
+        </div>
+      ) : data.length === 0 ? (
+        <div className="h-[220px] flex items-center justify-center text-xs text-slate-400">
+          No sales data available
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+            <defs>
+              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(173, 83%, 26%)" stopOpacity={0.18} />
+                <stop offset="95%" stopColor="hsl(173, 83%, 26%)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 90%)" vertical={false} />
+            <XAxis
+              dataKey="day"
+              tick={{ fontSize: 11, fill: 'hsl(220, 9%, 52%)' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: 'hsl(220, 9%, 52%)' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="revenue"
+              stroke="hsl(173, 83%, 26%)"
+              strokeWidth={2}
+              fill="url(#revenueGradient)"
+              dot={false}
+              activeDot={{ r: 4, fill: 'hsl(173, 83%, 26%)', strokeWidth: 0 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

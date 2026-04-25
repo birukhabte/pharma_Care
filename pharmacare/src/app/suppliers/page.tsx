@@ -116,7 +116,7 @@ function AddSupplierModal({ onClose }: AddSupplierModalProps) {
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">Add Supplier</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Add Supplier</button>
         </div>
       </div>
     </div>
@@ -138,10 +138,15 @@ export default function SuppliersPage() {
 
   const loadSuppliers = async () => {
     try {
-      setLoading(true);
+      const startTime = performance.now();
       const response = await api.getSuppliers();
+      const endTime = performance.now();
+      console.log(`Suppliers API call took ${(endTime - startTime).toFixed(2)}ms`);
+      
       // The API returns { suppliers: [...], totalPages, currentPage, total }
       const data = response.suppliers || response;
+      console.log(`Loaded ${data.length} suppliers`);
+      
       setSuppliers(data.map((s: any) => ({
         id: s._id,
         name: s.name,
@@ -151,12 +156,13 @@ export default function SuppliersPage() {
         city: s.address?.city || '',
         category: s.category,
         rating: s.rating || 0,
-        totalOrders: 0, // Not in database yet
+        totalOrders: s.totalOrders || 0,
         pendingOrders: 0, // Not in database yet
-        lastOrderDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        lastOrderDate: s.lastOrderDate || s.createdAt ? new Date(s.lastOrderDate || s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         status: s.status,
       })));
     } catch (error: any) {
+      console.error('Suppliers load error:', error);
       toast.error('Using offline data - ' + (error.message || 'Failed to load suppliers'));
       setSuppliers(suppliersData);
     } finally {
@@ -164,35 +170,57 @@ export default function SuppliersPage() {
     }
   };
 
-  const activeCount = suppliers.filter((s) => s.status === 'active').length;
-  const pendingCount = suppliers.filter((s) => s.status === 'pending').length;
-  const inactiveCount = suppliers.filter((s) => s.status === 'inactive').length;
-  const totalPendingOrders = suppliers.reduce((sum, s) => sum + s.pendingOrders, 0);
+  // Memoize expensive calculations
+  const { activeCount, pendingCount, inactiveCount, totalPendingOrders } = React.useMemo(() => ({
+    activeCount: suppliers.filter((s) => s.status === 'active').length,
+    pendingCount: suppliers.filter((s) => s.status === 'pending').length,
+    inactiveCount: suppliers.filter((s) => s.status === 'inactive').length,
+    totalPendingOrders: suppliers.reduce((sum, s) => sum + s.pendingOrders, 0),
+  }), [suppliers]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
   };
 
-  const filtered = suppliers
-    .filter((s) => {
-      const matchSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.contactPerson.toLowerCase().includes(search.toLowerCase()) ||
-        s.category.toLowerCase().includes(search.toLowerCase()) ||
-        s.city.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === 'all' || s.status === filterStatus;
-      return matchSearch && matchStatus;
-    })
-    .sort((a, b) => {
-      let valA: string | number = a[sortKey];
-      let valB: string | number = b[sortKey];
-      if (typeof valA === 'string') valA = valA.toLowerCase();
-      if (typeof valB === 'string') valB = valB.toLowerCase();
-      if (valA < valB) return sortAsc ? -1 : 1;
-      if (valA > valB) return sortAsc ? 1 : -1;
-      return 0;
-    });
+  // Memoize filtered and sorted data
+  const filtered = React.useMemo(() => {
+    return suppliers
+      .filter((s) => {
+        const matchSearch =
+          s.name.toLowerCase().includes(search.toLowerCase()) ||
+          s.contactPerson.toLowerCase().includes(search.toLowerCase()) ||
+          s.category.toLowerCase().includes(search.toLowerCase()) ||
+          s.city.toLowerCase().includes(search.toLowerCase());
+        const matchStatus = filterStatus === 'all' || s.status === filterStatus;
+        return matchSearch && matchStatus;
+      })
+      .sort((a, b) => {
+        let valA: string | number = a[sortKey];
+        let valB: string | number = b[sortKey];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return sortAsc ? -1 : 1;
+        if (valA > valB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+  }, [suppliers, search, filterStatus, sortKey, sortAsc]);
+
+  // Memoize star rendering function
+  const renderStars = React.useCallback((rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={12}
+            className={star <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'}
+          />
+        ))}
+        <span className="text-xs text-slate-500 ml-1">{rating.toFixed(1)}</span>
+      </div>
+    );
+  }, []);
 
   if (loading) {
     return (
@@ -207,21 +235,6 @@ export default function SuppliersPage() {
     );
   }
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            size={12}
-            className={star <= Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'}
-          />
-        ))}
-        <span className="text-xs text-slate-500 ml-1">{rating.toFixed(1)}</span>
-      </div>
-    );
-  };
-
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -233,7 +246,7 @@ export default function SuppliersPage() {
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus size={15} />
             Add Supplier

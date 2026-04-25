@@ -360,7 +360,7 @@ function PharmacistView() {
               <button
                 onClick={handleSaveOrder}
                 disabled={cart.length === 0 || !customerName}
-                className="w-full py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold text-sm rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <FileText size={16} />
                 Save Order for Cashier
@@ -909,7 +909,7 @@ function CashierView() {
                 <button
                   onClick={handleCompleteSale}
                   disabled={paymentMethod === 'cash' && (!amountReceived || parseFloat(amountReceived) < selectedOrder.total)}
-                  className="flex-1 px-4 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   <CheckCircle size={16} />
                   Complete Sale

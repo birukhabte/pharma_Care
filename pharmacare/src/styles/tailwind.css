@@ -62,8 +62,12 @@
 	}
 
 	.sidebar-nav-item-active {
-		background-color: rgb(240 253 250);
-		color: rgb(15 118 110);
+		background-color: #16a34a !important;
+		color: white !important;
+	}
+
+	.sidebar-nav-item-active:hover {
+		background-color: #15803d !important;
 	}
 
 	.sidebar-nav-item-inactive {

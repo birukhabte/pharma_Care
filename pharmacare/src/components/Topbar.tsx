@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Bell, Search, Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -41,41 +41,15 @@ const notifications = [
   },
 ];
 
-export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarProps) {
+const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [currentDateTime, setCurrentDateTime] = useState('');
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Ensure component is mounted before accessing localStorage
+  // Load user data on mount
   useEffect(() => {
-    setMounted(true);
-    
-    // Update date and time every second - only on client
-    const updateDateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      };
-      setCurrentDateTime(now.toLocaleString('en-US', options));
-    };
-
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Load user data on client side only
-  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       if (userData) {
@@ -99,50 +73,47 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
   const getUserRole = () => user?.role?.replace('_', ' ') || 'Administrator';
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20">
+    <header 
+      className="h-auto rounded-[20px] flex items-center px-4 lg:px-6 gap-4 sticky top-0 z-20 py-4 ml-4 lg:ml-6"
+      style={{ background: 'linear-gradient(135deg, rgb(9, 150, 33) 0%, #0d2b36 100%)' }}
+    >
       {/* Mobile menu toggle */}
       <button
-        className="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+        className="lg:hidden p-1.5 rounded-lg hover:bg-emerald-700 transition-colors"
         onClick={onMobileMenuToggle}
         aria-label="Toggle menu"
       >
-        {mobileMenuOpen ? <X size={20} className="text-slate-600" /> : <Menu size={20} className="text-slate-600" />}
+        {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
       </button>
 
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="flex-1 max-w-xs">
         <div className="relative">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-white"
           />
           <input
             type="text"
-            placeholder="Search medicines, invoices, suppliers..."
-            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all text-slate-900 placeholder:text-slate-400"
+            placeholder="Search medicines, employees..."
+            className="w-full pl-9 pr-4 py-2 text-sm border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30 transition-all text-white placeholder:text-white/70"
+            style={{ background: 'linear-gradient(135deg, rgb(9, 150, 33) 0%, #0d2b36 100%)' }}
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 text-xs text-white/80 bg-emerald-900/50 px-1.5 py-0.5 rounded">
             ⌘K
           </kbd>
         </div>
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* Date & Time */}
-        {mounted && (
-          <span className="hidden md:block text-xs text-slate-400 font-mono">
-            {currentDateTime}
-          </span>
-        )}
-
         {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="relative p-2 rounded-lg hover:bg-emerald-700 transition-colors"
             aria-label="Notifications"
           >
-            <Bell size={18} className="text-slate-600" />
+            <Bell size={18} className="text-white" />
             {unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
             )}
@@ -194,17 +165,17 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
         <div className="relative">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center">
-              <span className="text-xs font-semibold text-teal-700">
+            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
+              <span className="text-xs font-semibold text-emerald-700">
                 {getUserInitials()}
               </span>
             </div>
-            <span className="hidden md:block text-sm font-medium text-slate-700">
+            <span className="hidden md:block text-sm font-medium text-white">
               {getUserName()}
             </span>
-            <ChevronDown size={14} className="hidden md:block text-slate-400" />
+            <ChevronDown size={14} className="hidden md:block text-white" />
           </button>
 
           {/* Profile dropdown */}
@@ -242,7 +213,10 @@ export default function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarPro
       </div>
     </header>
   );
-}// Commit on 2024-06-6 at 16:42
+});
+
+export default Topbar;
+// Commit on 2024-06-6 at 16:42
 // Commit on 2024-06-8 at 9:41
 // Commit on 2024-06-12 at 18:56
 // Commit on 2024-06-12 at 9:54

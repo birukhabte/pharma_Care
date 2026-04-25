@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     id: 'nav-dashboard',
     label: 'Dashboard',
     href: '/dashboard',
-    icon: <LayoutDashboard size={18} />,
+    icon: <LayoutDashboard size={22} strokeWidth={2.5} />,
     group: 'main',
     resource: 'dashboard',
   },
@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     id: 'nav-medicines',
     label: 'Medicines',
     href: '/medicine-management',
-    icon: <Pill size={18} />,
+    icon: <Pill size={22} strokeWidth={2.5} />,
     badge: 5,
     group: 'main',
     resource: 'medicines',
@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
     id: 'nav-sales',
     label: 'Sales / POS',
     href: '/sales',
-    icon: <ShoppingCart size={18} />,
+    icon: <ShoppingCart size={22} strokeWidth={2.5} />,
     group: 'main',
     resource: 'sales',
     requiredRoles: ['admin', 'pharmacist', 'cashier'],
@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
     id: 'nav-inventory',
     label: 'Inventory',
     href: '/inventory',
-    icon: <Package size={18} />,
+    icon: <Package size={22} strokeWidth={2.5} />,
     group: 'main',
     resource: 'inventory',
     requiredRoles: ['admin', 'inventory_manager'],
@@ -59,7 +59,7 @@ const navItems: NavItem[] = [
     id: 'nav-suppliers',
     label: 'Suppliers',
     href: '/suppliers',
-    icon: <Truck size={18} />,
+    icon: <Truck size={22} strokeWidth={2.5} />,
     group: 'main',
     resource: 'suppliers',
     requiredRoles: ['admin', 'inventory_manager'],
@@ -68,7 +68,7 @@ const navItems: NavItem[] = [
     id: 'nav-prescriptions',
     label: 'Prescriptions',
     href: '/prescriptions',
-    icon: <ClipboardList size={18} />,
+    icon: <ClipboardList size={22} strokeWidth={2.5} />,
     badge: 3,
     group: 'main',
     resource: 'prescriptions',
@@ -78,7 +78,7 @@ const navItems: NavItem[] = [
     id: 'nav-reports',
     label: 'Reports',
     href: '/reports',
-    icon: <BarChart3 size={18} />,
+    icon: <BarChart3 size={22} strokeWidth={2.5} />,
     group: 'analytics',
     resource: 'reports',
   },
@@ -86,7 +86,7 @@ const navItems: NavItem[] = [
     id: 'nav-users',
     label: 'User Management',
     href: '/users',
-    icon: <UserCog size={18} />,
+    icon: <UserCog size={22} strokeWidth={2.5} />,
     group: 'system',
     resource: 'users',
     requiredRoles: ['admin'],
@@ -95,7 +95,7 @@ const navItems: NavItem[] = [
     id: 'nav-settings',
     label: 'Settings',
     href: '/settings',
-    icon: <Settings size={18} />,
+    icon: <Settings size={22} strokeWidth={2.5} />,
     group: 'system',
     resource: 'settings',
     requiredRoles: ['admin'],
@@ -107,7 +107,7 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+const Sidebar = memo(function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -185,20 +185,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={`
-        fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-30 flex flex-col
+        fixed left-0 top-0 h-screen bg-white z-30 flex flex-col
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-60'}
       `}
+      style={{ borderRight: '1px solid rgba(0, 0, 0, 0.12)', boxSizing: 'border-box' }}
     >
       {/* Logo */}
       <div
-        className={`flex items-center h-16 border-b border-slate-100 px-3 flex-shrink-0 ${
+        className={`flex items-center h-16 px-3 flex-shrink-0 ${
           collapsed ? 'justify-center' : 'gap-2'
         }`}
       >
         <AppLogo size={32} />
         {!collapsed && (
-          <span className="font-semibold text-slate-800 text-base tracking-tight truncate">
+          <span className="font-semibold text-green-600 text-base tracking-tight truncate">
             PharmaCare
           </span>
         )}
@@ -206,13 +207,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-3 px-2">
-        {/* Main */}
+        {/* Ethiopian Pharmacy Label */}
         {!collapsed && (
-          <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 mb-2">
-            Main
-          </p>
+          <div className="px-3 mb-4 mt-1">
+            <span 
+              className="inline-block text-xs font-medium text-green-600 border border-green-600 px-3 py-1.5 uppercase tracking-wider"
+              style={{ borderRadius: '8px', fontWeight: 500 }}
+            >
+              Ethiopian Pharmacy
+            </span>
+          </div>
         )}
-        <ul className="space-y-0.5 mb-4">
+        <ul className="space-y-2 mb-4">
           {groupedItems.main.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -222,8 +228,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     className={`sidebar-nav-item ${
                       isActive ? 'sidebar-nav-item-active' : 'sidebar-nav-item-inactive'
                     } ${collapsed ? 'justify-center px-2' : ''}`}
+                    style={isActive ? { backgroundColor: '#16a34a', color: 'white' } : {}}
                   >
-                    <span className={isActive ? 'text-teal-700' : 'text-slate-400'}>
+                    <span className={isActive ? 'text-white' : 'text-black'}>
                       {item.icon}
                     </span>
                     {!collapsed && (
@@ -250,8 +257,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             Analytics
           </p>
         )}
-        {collapsed && <div className="border-t border-slate-100 dark:border-slate-700 my-2 mx-2" />}
-        <ul className="space-y-0.5 mb-4">
+        {collapsed && <div className="my-2 mx-2" />}
+        <ul className="space-y-2 mb-4">
           {groupedItems.analytics.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -261,8 +268,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     className={`sidebar-nav-item ${
                       isActive ? 'sidebar-nav-item-active' : 'sidebar-nav-item-inactive'
                     } ${collapsed ? 'justify-center px-2' : ''}`}
+                    style={isActive ? { backgroundColor: '#16a34a', color: 'white' } : {}}
                   >
-                    <span className={isActive ? 'text-teal-700' : 'text-slate-400'}>
+                    <span className={isActive ? 'text-white' : 'text-slate-400'}>
                       {item.icon}
                     </span>
                     {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
@@ -279,8 +287,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
             System
           </p>
         )}
-        {collapsed && <div className="border-t border-slate-100 dark:border-slate-700 my-2 mx-2" />}
-        <ul className="space-y-0.5">
+        {collapsed && <div className="my-2 mx-2" />}
+        <ul className="space-y-2">
           {groupedItems.system.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -290,8 +298,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     className={`sidebar-nav-item ${
                       isActive ? 'sidebar-nav-item-active' : 'sidebar-nav-item-inactive'
                     } ${collapsed ? 'justify-center px-2' : ''}`}
+                    style={isActive ? { backgroundColor: '#16a34a', color: 'white' } : {}}
                   >
-                    <span className={isActive ? 'text-teal-700' : 'text-slate-400'}>
+                    <span className={isActive ? 'text-white' : 'text-slate-400'}>
                       {item.icon}
                     </span>
                     {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
@@ -305,7 +314,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* User Profile */}
       {mounted && (
-        <div className="border-t border-slate-100 p-2 flex-shrink-0">
+        <div className="p-2 flex-shrink-0">
           {!collapsed ? (
             <div 
               onClick={handleLogout}
@@ -353,4 +362,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </button>
     </aside>
   );
-}
+});
+
+export default Sidebar;

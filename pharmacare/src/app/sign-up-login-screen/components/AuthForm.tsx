@@ -27,10 +27,10 @@ type LoginFormData = {
 };
 
 const demoCredentials = [
-  { role: 'Administrator', email: 'admin@pharmacare.et', password: 'password123' },
-  { role: 'Pharmacist', email: 'pharmacist@pharmacare.et', password: 'password123' },
-  { role: 'Inventory Manager', email: 'inventory@pharmacare.et', password: 'password123' },
-  { role: 'Cashier', email: 'cashier@pharmacare.et', password: 'password123' },
+  { role: 'Administrator', email: 'admin@pharmacare.et', password: 'Pharma@2026' },
+  { role: 'Pharmacist', email: 'tigist.haile@pharmacare.et', password: 'Staff@2026' },
+  { role: 'Inventory Manager', email: 'dawit.tesfaye@pharmacare.et', password: 'Invent@2026' },
+  { role: 'Cashier', email: 'meron.bekele@pharmacare.et', password: 'Cashier@2026' },
 ];
 
 function CopyButton({ text }: { text: string }) {

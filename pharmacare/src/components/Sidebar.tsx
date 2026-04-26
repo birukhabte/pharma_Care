@@ -29,15 +29,6 @@ const navItems: NavItem[] = [
     resource: 'dashboard',
   },
   {
-    id: 'nav-medicines',
-    label: 'Medicines',
-    href: '/medicine-management',
-    icon: <Pill size={22} strokeWidth={2.5} />,
-    badge: 5,
-    group: 'main',
-    resource: 'medicines',
-  },
-  {
     id: 'nav-sales',
     label: 'Sales / POS',
     href: '/sales',

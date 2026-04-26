@@ -27,6 +27,8 @@ export interface Medicine {
   hsnCode: string;
   gstRate: number;
   schedule: string;
+  productionDate?: string;
+  expiryDate?: string;
 }
 
 const MOCK_MEDICINES: Medicine[] = [
@@ -378,15 +380,23 @@ export default function MedicineTable() {
 
   useEffect(() => {
     setUserRole(getUserRole());
+    setLoading(true);
     loadMedicines();
   }, []);
 
   const loadMedicines = async () => {
     try {
-      setLoading(true);
+      const startTime = performance.now();
       const data = await api.getMedicines();
-      setMedicines(data.map((m: any) => ({ ...m, id: m._id })));
+      const endTime = performance.now();
+      console.log(`Medicines API call took ${(endTime - startTime).toFixed(2)}ms`);
+      
+      const medicines = data.medicines || data;
+      console.log(`Loaded ${medicines.length} medicines`);
+      
+      setMedicines(medicines.map((m: any) => ({ ...m, id: m._id })));
     } catch (error: any) {
+      console.error('Medicines load error:', error);
       // If API fails, use mock data
       setMedicines(MOCK_MEDICINES);
       toast.error('Using offline data - ' + (error.message || 'Failed to load medicines'));

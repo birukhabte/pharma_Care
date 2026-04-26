@@ -3,10 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { getUserRole } from '@/lib/permissions';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import { 
   ShoppingCart, Search, Plus, Minus, CreditCard, Banknote, 
   Smartphone, X, CheckCircle, Printer, FileText, User, Clock,
-  AlertCircle, Package, DollarSign
+  AlertCircle, Package, DollarSign, Loader2
 } from 'lucide-react';
 
 interface Medicine {
@@ -16,6 +18,7 @@ interface Medicine {
   price: number;
   stock: number;
   category: string;
+  type: 'medicine' | 'product';
 }
 
 interface CartItem extends Medicine {
@@ -38,17 +41,6 @@ interface PendingOrder {
   completedAt?: string;
   paymentMethod?: 'cash' | 'card' | 'mobile';
 }
-
-const medicines: Medicine[] = [
-  { id: 'm1', name: 'Paracetamol 500mg', generic: 'Acetaminophen', price: 12.5, stock: 240, category: 'Analgesic' },
-  { id: 'm2', name: 'Amoxicillin 250mg', generic: 'Amoxicillin', price: 45.0, stock: 120, category: 'Antibiotic' },
-  { id: 'm3', name: 'Metformin 500mg', generic: 'Metformin HCl', price: 28.0, stock: 180, category: 'Antidiabetic' },
-  { id: 'm4', name: 'Atorvastatin 10mg', generic: 'Atorvastatin', price: 62.0, stock: 95, category: 'Statin' },
-  { id: 'm5', name: 'Omeprazole 20mg', generic: 'Omeprazole', price: 34.5, stock: 150, category: 'Antacid' },
-  { id: 'm6', name: 'Cetirizine 10mg', generic: 'Cetirizine HCl', price: 18.0, stock: 200, category: 'Antihistamine' },
-  { id: 'm7', name: 'Azithromycin 500mg', generic: 'Azithromycin', price: 85.0, stock: 60, category: 'Antibiotic' },
-  { id: 'm8', name: 'Ibuprofen 400mg', generic: 'Ibuprofen', price: 22.0, stock: 175, category: 'NSAID' },
-];
 
 const paymentMethods = [
   { id: 'cash', label: 'Cash', icon: <Banknote size={18} /> },
@@ -121,12 +113,81 @@ function PharmacistView() {
   const [discount, setDiscount] = useState(0);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'medicine' | 'product'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  // Load medicines and products on mount
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch both medicines and products in parallel
+      const [medicinesResponse, productsResponse] = await Promise.all([
+        api.getMedicines().catch(() => ({ medicines: [] })),
+        api.getProducts().catch(() => ({ products: [] }))
+      ]);
+
+      const medicinesData = medicinesResponse.medicines || medicinesResponse || [];
+      const productsData = productsResponse.products || productsResponse || [];
+
+      // Map medicines
+      const mappedMedicines: Medicine[] = medicinesData.map((m: any) => ({
+        id: m._id,
+        name: m.name,
+        generic: m.genericName || m.name,
+        price: m.unitPrice || 0,
+        stock: m.stockQty || m.stock || 0,
+        category: m.category,
+        type: 'medicine' as const
+      }));
+
+      // Map products
+      const mappedProducts: Medicine[] = productsData.map((p: any) => ({
+        id: p._id,
+        name: p.name,
+        generic: p.name,
+        price: p.unitPrice || p.price || 0,
+        stock: p.currentStock || p.stock || 0,
+        category: p.category,
+        type: 'product' as const
+      }));
+
+      // Combine and filter out items with no stock
+      const allItems = [...mappedMedicines, ...mappedProducts].filter(item => item.stock > 0);
+      setMedicines(allItems);
+      
+      console.log(`Loaded ${mappedMedicines.length} medicines and ${mappedProducts.length} products for POS`);
+    } catch (error) {
+      console.error('Failed to load inventory:', error);
+      toast.error('Failed to load inventory data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get unique categories
+  const categories = React.useMemo(() => {
+    const cats = new Set(medicines.map(m => m.category));
+    return ['all', ...Array.from(cats).sort()];
+  }, [medicines]);
 
   const filtered = medicines.filter(
-    (m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.generic.toLowerCase().includes(search.toLowerCase()) ||
-      m.category.toLowerCase().includes(search.toLowerCase())
+    (m) => {
+      const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) ||
+        m.generic.toLowerCase().includes(search.toLowerCase()) ||
+        m.category.toLowerCase().includes(search.toLowerCase());
+      
+      const matchType = typeFilter === 'all' || m.type === typeFilter;
+      const matchCategory = categoryFilter === 'all' || m.category === categoryFilter;
+      
+      return matchSearch && matchType && matchCategory;
+    }
   );
 
   const addToCart = (medicine: Medicine) => {
@@ -218,44 +279,116 @@ function PharmacistView() {
         <div className="flex gap-5 flex-1 min-h-0">
           {/* Medicine Catalog */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="relative mb-4">
+            <div className="relative mb-3">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search medicines..."
+                placeholder="Search medicines and products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
+            {/* Filters */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="text-xs font-medium text-slate-600">Type:</span>
+              <button
+                onClick={() => setTypeFilter('all')}
+                className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                  typeFilter === 'all'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setTypeFilter('medicine')}
+                className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                  typeFilter === 'medicine'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Medicines
+              </button>
+              <button
+                onClick={() => setTypeFilter('product')}
+                className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                  typeFilter === 'product'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Products
+              </button>
+
+              <span className="text-xs font-medium text-slate-600 ml-4">Category:</span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="px-3 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-slate-700"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat === 'all' ? 'All Categories' : cat}
+                  </option>
+                ))}
+              </select>
+
+              <span className="text-xs text-slate-400 ml-auto">
+                {filtered.length} items
+              </span>
+            </div>
+
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 overflow-y-auto pr-1 flex-1">
-              {filtered.map((med) => {
-                const inCart = cart.find((i) => i.id === med.id);
-                return (
-                  <button
-                    key={med.id}
-                    onClick={() => addToCart(med)}
-                    className={`text-left p-3.5 rounded-xl border transition-all ${
-                      inCart ? 'border-teal-400 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-300'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <p className="text-sm font-semibold text-slate-800">{med.name}</p>
-                      {inCart && (
-                        <span className="w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                          {inCart.quantity}
+              {loading ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-12">
+                  <Loader2 size={32} className="animate-spin text-teal-600 mb-2" />
+                  <p className="text-sm text-slate-500">Loading inventory...</p>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-12">
+                  <Package size={32} className="text-slate-300 mb-2" />
+                  <p className="text-sm text-slate-500">
+                    {search ? 'No items match your search' : 'No items available'}
+                  </p>
+                </div>
+              ) : (
+                filtered.map((med) => {
+                  const inCart = cart.find((i) => i.id === med.id);
+                  return (
+                    <button
+                      key={med.id}
+                      onClick={() => addToCart(med)}
+                      className={`text-left p-3.5 rounded-xl border transition-all ${
+                        inCart ? 'border-teal-400 bg-teal-50' : 'border-slate-200 bg-white hover:border-teal-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <p className="text-sm font-semibold text-slate-800">{med.name}</p>
+                        {inCart && (
+                          <span className="w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                            {inCart.quantity}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mb-2">{med.generic}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{med.category}</span>
+                        <span className="text-sm font-bold text-teal-700">Br {med.price.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-slate-400">Stock: {med.stock}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${med.type === 'medicine' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                          {med.type === 'medicine' ? 'Medicine' : 'Product'}
                         </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 mb-2">{med.generic}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{med.category}</span>
-                      <span className="text-sm font-bold text-teal-700">Br {med.price.toFixed(2)}</span>
-                    </div>
-                  </button>
-                );
-              })}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 

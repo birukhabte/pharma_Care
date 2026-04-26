@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import {
   Users,
   Search,
@@ -14,89 +16,31 @@ import {
   Mail,
   Phone,
   Calendar,
+  Loader2,
 } from 'lucide-react';
 
 interface User {
-  id: string;
+  _id: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone?: string;
   role: 'admin' | 'pharmacist' | 'inventory_manager' | 'cashier';
   status: 'active' | 'inactive';
   createdAt: string;
-  lastLogin: string;
+  lastLogin?: string;
+  pharmacyName?: string;
 }
 
-const userData: User[] = [
-  {
-    id: 'USR001',
-    fullName: 'Alemayehu Tadesse',
-    email: 'alemayehu@pharmacare.et',
-    phone: '+251-911-234567',
-    role: 'admin',
-    status: 'active',
-    createdAt: '2025-01-15',
-    lastLogin: '2026-04-24',
-  },
-  {
-    id: 'USR002',
-    fullName: 'Tigist Bekele',
-    email: 'tigist@pharmacare.et',
-    phone: '+251-911-345678',
-    role: 'pharmacist',
-    status: 'active',
-    createdAt: '2025-02-20',
-    lastLogin: '2026-04-23',
-  },
-  {
-    id: 'USR003',
-    fullName: 'Dawit Haile',
-    email: 'dawit@pharmacare.et',
-    phone: '+251-911-456789',
-    role: 'inventory_manager',
-    status: 'active',
-    createdAt: '2025-03-10',
-    lastLogin: '2026-04-22',
-  },
-  {
-    id: 'USR004',
-    fullName: 'Meron Tesfaye',
-    email: 'meron@pharmacare.et',
-    phone: '+251-911-567890',
-    role: 'cashier',
-    status: 'active',
-    createdAt: '2025-03-25',
-    lastLogin: '2026-04-20',
-  },
-  {
-    id: 'USR005',
-    fullName: 'Yohannes Kebede',
-    email: 'yohannes@pharmacare.et',
-    phone: '+251-911-678901',
-    role: 'pharmacist',
-    status: 'inactive',
-    createdAt: '2025-01-30',
-    lastLogin: '2026-03-15',
-  },
-];
-
-const roleConfig = {
-  admin: { label: 'Administrator', color: 'bg-purple-100 text-purple-700', icon: Shield },
-  pharmacist: { label: 'Pharmacist', color: 'bg-teal-100 text-teal-700', icon: Users },
-  inventory_manager: { label: 'Inventory Manager', color: 'bg-blue-100 text-blue-700', icon: Users },
-  cashier: { label: 'Cashier', color: 'bg-amber-100 text-amber-700', icon: Users },
-};
-
-const statusConfig = {
-  active: { label: 'Active', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  inactive: { label: 'Inactive', color: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500' },
-};
-
 export default function UsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -104,33 +48,165 @@ export default function UsersPage() {
     role: '',
     password: '',
   });
+  const [editFormData, setEditFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    role: '',
+    status: 'active' as 'active' | 'inactive',
+  });
 
-  const filtered = userData.filter((user) => {
+  // Load users from API
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getUsers();
+      setUsers(response.users || []);
+    } catch (error: any) {
+      console.error('Failed to load users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = users.filter((user) => {
     const matchSearch =
       user.fullName.toLowerCase().includes(search.toLowerCase()) ||
       user.email.toLowerCase().includes(search.toLowerCase()) ||
-      user.phone.includes(search);
+      (user.phone && user.phone.includes(search));
     const matchRole = filterRole === 'all' || user.role === filterRole;
     const matchStatus = filterStatus === 'all' || user.status === filterStatus;
     return matchSearch && matchRole && matchStatus;
   });
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Adding new user:', formData);
-    setFormData({
-      fullName: '',
-      email: '',
-      phone: '',
-      role: '',
-      password: '',
-    });
-    setShowAddModal(false);
+    
+    if (isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      await api.createUser({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        password: formData.password,
+      });
+      
+      toast.success('User created successfully');
+      
+      // Reset form and close modal
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        role: '',
+        password: '',
+      });
+      setShowAddModal(false);
+      
+      // Reload users
+      await loadUsers();
+    } catch (error: any) {
+      console.error('Failed to create user:', error);
+      toast.error(error.message || 'Failed to create user');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const totalUsers = userData.length;
-  const activeUsers = userData.filter((u) => u.status === 'active').length;
-  const adminCount = userData.filter((u) => u.role === 'admin').length;
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditFormData({
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+      status: user.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSubmitting || !editingUser) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      await api.updateUser(editingUser._id, {
+        fullName: editFormData.fullName,
+        email: editFormData.email,
+        phone: editFormData.phone,
+        role: editFormData.role,
+        status: editFormData.status,
+      });
+      
+      toast.success('User updated successfully');
+      
+      // Close modal and reload users
+      setShowEditModal(false);
+      setEditingUser(null);
+      await loadUsers();
+    } catch (error: any) {
+      console.error('Failed to update user:', error);
+      toast.error(error.message || 'Failed to update user');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete ${userName}?`)) {
+      return;
+    }
+    
+    try {
+      await api.deleteUser(userId);
+      toast.success('User deleted successfully');
+      await loadUsers();
+    } catch (error: any) {
+      console.error('Failed to delete user:', error);
+      toast.error(error.message || 'Failed to delete user');
+    }
+  };
+
+  const totalUsers = users.length;
+  const activeUsers = users.filter((u) => u.status === 'active').length;
+  const adminCount = users.filter((u) => u.role === 'admin').length;
+
+  const roleConfig = {
+    admin: { label: 'Administrator', color: 'bg-purple-100 text-purple-700', icon: Shield },
+    pharmacist: { label: 'Pharmacist', color: 'bg-teal-100 text-teal-700', icon: Users },
+    inventory_manager: { label: 'Inventory Manager', color: 'bg-blue-100 text-blue-700', icon: Users },
+    cashier: { label: 'Cashier', color: 'bg-amber-100 text-amber-700', icon: Users },
+  };
+
+  const statusConfig = {
+    active: { label: 'Active', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+    inactive: { label: 'Inactive', color: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500' },
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="p-6 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 size={32} className="animate-spin text-emerald-600 mx-auto mb-4" />
+            <p className="text-slate-500">Loading users...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -258,7 +334,7 @@ export default function UsersPage() {
                     const roleCfg = roleConfig[user.role];
                     const statusCfg = statusConfig[user.status];
                     return (
-                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                      <tr key={user._id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
@@ -268,7 +344,7 @@ export default function UsersPage() {
                             </div>
                             <div>
                               <p className="font-medium text-slate-800">{user.fullName}</p>
-                              <p className="text-xs text-slate-400">{user.id}</p>
+                              <p className="text-xs text-slate-400">{user._id}</p>
                             </div>
                           </div>
                         </td>
@@ -278,10 +354,12 @@ export default function UsersPage() {
                               <Mail size={12} className="text-slate-400" />
                               <span className="text-xs">{user.email}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-slate-600">
-                              <Phone size={12} className="text-slate-400" />
-                              <span className="text-xs">{user.phone}</span>
-                            </div>
+                            {user.phone && (
+                              <div className="flex items-center gap-1.5 text-slate-600">
+                                <Phone size={12} className="text-slate-400" />
+                                <span className="text-xs">{user.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3">
@@ -299,15 +377,25 @@ export default function UsersPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 text-slate-600">
                             <Calendar size={12} className="text-slate-400" />
-                            <span className="text-xs">{user.lastLogin}</span>
+                            <span className="text-xs">
+                              {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <button className="p-1.5 hover:bg-slate-100 rounded transition-colors" title="Edit user">
+                            <button 
+                              onClick={() => handleEditUser(user)}
+                              className="p-1.5 hover:bg-slate-100 rounded transition-colors" 
+                              title="Edit user"
+                            >
                               <Edit2 size={14} className="text-slate-600" />
                             </button>
-                            <button className="p-1.5 hover:bg-red-50 rounded transition-colors" title="Delete user">
+                            <button 
+                              onClick={() => handleDeleteUser(user._id, user.fullName)}
+                              className="p-1.5 hover:bg-red-50 rounded transition-colors" 
+                              title="Delete user"
+                            >
                               <Trash2 size={14} className="text-red-600" />
                             </button>
                           </div>
@@ -427,9 +515,145 @@ export default function UsersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Add User
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Add User'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-modal w-full max-w-lg">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Edit User</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Update user information</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingUser(null);
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editFormData.fullName}
+                  onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                  placeholder="e.g., John Doe"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                  placeholder="user@pharmacare.et"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                  placeholder="+251-911-234567"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Role <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                >
+                  <option value="admin">Administrator</option>
+                  <option value="pharmacist">Pharmacist</option>
+                  <option value="inventory_manager">Inventory Manager</option>
+                  <option value="cashier">Cashier</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'active' | 'inactive' })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update User'
+                  )}
                 </button>
               </div>
             </form>

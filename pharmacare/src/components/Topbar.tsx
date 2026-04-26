@@ -86,6 +86,11 @@ const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: Topb
         {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
       </button>
 
+      {/* PharmaCare Text */}
+      <div className="hidden md:block">
+        <span className="text-lg font-bold text-white tracking-tight">PharmaCare</span>
+      </div>
+
       {/* Search */}
       <div className="flex-1 max-w-xs">
         <div className="relative">

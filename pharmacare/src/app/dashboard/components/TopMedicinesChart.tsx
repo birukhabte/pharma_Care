@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -11,17 +11,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-
-const topMedicines = [
-  { name: 'Amoxicillin', units: 312 },
-  { name: 'Metformin', units: 287 },
-  { name: 'Atorvastatin', units: 241 },
-  { name: 'Omeprazole', units: 198 },
-  { name: 'Amlodipine', units: 176 },
-  { name: 'Azithromycin', units: 154 },
-  { name: 'Pantoprazole', units: 138 },
-  { name: 'Cetirizine', units: 121 },
-];
+import { api } from '@/lib/api';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -42,6 +32,25 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export default function TopMedicinesChart() {
+  const [topMedicines, setTopMedicines] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTopMedicines();
+  }, []);
+
+  const loadTopMedicines = async () => {
+    try {
+      const data = await api.getTopMedicines();
+      const medicines = data.topMedicines || data || [];
+      setTopMedicines(medicines);
+    } catch (error) {
+      console.error('Failed to load top medicines:', error);
+      setTopMedicines([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-card h-full">
       <div className="mb-5">
@@ -49,7 +58,16 @@ export default function TopMedicinesChart() {
         <p className="text-xs text-slate-400 mt-0.5">Units dispensed this month</p>
       </div>
 
-      <ResponsiveContainer width="100%" height={220}>
+      {loading ? (
+        <div className="h-[220px] flex items-center justify-center text-xs text-slate-400">
+          Loading top medicines...
+        </div>
+      ) : topMedicines.length === 0 ? (
+        <div className="h-[220px] flex items-center justify-center text-xs text-slate-400">
+          No medicine sales data available
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
         <BarChart
           data={topMedicines}
           layout="vertical"
@@ -82,6 +100,7 @@ export default function TopMedicinesChart() {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }

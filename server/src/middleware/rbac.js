@@ -27,6 +27,14 @@ const PERMISSIONS = {
     reports: ['read'],
     suppliers: ['read', 'update'],
     dashboard: ['read']
+  },
+  
+  // Cashier - Sales and checkout
+  cashier: {
+    medicines: ['read'],
+    sales: ['create', 'read'],
+    reports: [],
+    dashboard: ['read']
   }
 };
 

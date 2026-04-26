@@ -40,8 +40,12 @@ router.post(
       
       console.log('✅ Password valid, generating token...');
 
+      // Update last login
+      user.lastLogin = new Date();
+      await user.save();
+
       const token = jwt.sign(
-        { id: user._id, email: user.email, role: user.role },
+        { id: user._id, email: user.email, role: user.role, fullName: user.fullName },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       );
@@ -100,7 +104,7 @@ router.post(
       await newUser.save();
 
       const token = jwt.sign(
-        { id: newUser._id, email: newUser.email, role: newUser.role },
+        { id: newUser._id, email: newUser.email, role: newUser.role, fullName: newUser.fullName },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       );

@@ -7,7 +7,6 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/auth');
 const medicineRoutes = require('./routes/medicines');
 const dashboardRoutes = require('./routes/dashboard');
-const customerRoutes = require('./routes/customers');
 const supplierRoutes = require('./routes/suppliers');
 const prescriptionRoutes = require('./routes/prescriptions');
 const purchaseOrderRoutes = require('./routes/purchaseOrders');
@@ -15,6 +14,10 @@ const stockMovementRoutes = require('./routes/stockMovements');
 const notificationRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
 const auditLogRoutes = require('./routes/auditLogs');
+const seedRoutes = require('./routes/seed');
+const productRoutes = require('./routes/products');
+const orderRoutes = require('./routes/orders');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,7 +31,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/customers', customerRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
@@ -36,6 +38,10 @@ app.use('/api/stock-movements', stockMovementRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/seed', seedRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -49,7 +55,6 @@ if (process.env.VERCEL !== '1') {
     console.log(`  - /api/auth`);
     console.log(`  - /api/medicines`);
     console.log(`  - /api/dashboard`);
-    console.log(`  - /api/customers`);
     console.log(`  - /api/suppliers`);
     console.log(`  - /api/prescriptions`);
     console.log(`  - /api/purchase-orders`);
@@ -57,6 +62,10 @@ if (process.env.VERCEL !== '1') {
     console.log(`  - /api/notifications`);
     console.log(`  - /api/settings`);
     console.log(`  - /api/audit-logs`);
+    console.log(`  - /api/products`);
+    console.log(`  - /api/orders`);
+    console.log(`  - /api/users`);
+    console.log(`  - /api/seed (POST to seed database)`);
   });
 }
 

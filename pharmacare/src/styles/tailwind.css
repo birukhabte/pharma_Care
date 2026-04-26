@@ -1,4 +1,152 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@layer base {
+	html,
+	body {
+		padding: 0;
+		margin: 0;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+}
+
+@layer components {
+	.form-label {
+		display: block;
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: rgb(51 65 85);
+		margin-bottom: 0.375rem;
+	}
+
+	.form-input {
+		width: 100%;
+		border-radius: 0.5rem;
+		border: 1px solid rgb(226 232 240);
+		background: #fff;
+		padding: 0.625rem 0.75rem;
+		font-size: 0.875rem;
+		line-height: 1.25rem;
+		color: rgb(51 65 85);
+		transition: border-color 150ms ease, box-shadow 150ms ease;
+	}
+
+	.form-input::placeholder {
+		color: rgb(148 163 184);
+	}
+
+	.form-input:focus {
+		outline: none;
+		border-color: transparent;
+		box-shadow: 0 0 0 2px rgb(20 184 166);
+	}
+
+	.form-input-error {
+		border-color: rgb(252 165 165);
+	}
+
+	.form-input-error:focus {
+		box-shadow: 0 0 0 2px rgb(239 68 68);
+	}
+
+	.form-error {
+		font-size: 0.75rem;
+		color: rgb(239 68 68);
+		margin-top: 0.25rem;
+	}
+
+	.shadow-modal {
+		box-shadow:
+			0 20px 45px -20px rgba(15, 23, 42, 0.35),
+			0 10px 20px -15px rgba(15, 23, 42, 0.2);
+	}
+
+	.sidebar-nav-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.625rem 0.75rem;
+		border-radius: 0.5rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		transition: all 150ms ease;
+		position: relative;
+	}
+
+	.sidebar-nav-item-active {
+		background-color: #16a34a !important;
+		color: white !important;
+	}
+
+	.sidebar-nav-item-active:hover {
+		background-color: #15803d !important;
+	}
+
+	.sidebar-nav-item-inactive {
+		color: rgb(100 116 139);
+	}
+
+	.sidebar-nav-item-inactive:hover {
+		background-color: rgb(248 250 252);
+		color: rgb(51 65 85);
+	}
+}
+
+@layer utilities {
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out both;
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out both;
+	}
+
+	.scrollbar-thin {
+		scrollbar-width: thin;
+		scrollbar-color: rgb(203 213 225) transparent;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-thumb {
+		background-color: rgb(203 213 225);
+		border-radius: 3px;
+	}
+
+	.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+		background-color: rgb(148 163 184);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(20px) scale(0.95);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
 

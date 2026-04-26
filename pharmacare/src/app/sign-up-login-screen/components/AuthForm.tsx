@@ -10,8 +10,6 @@ import {
   EyeOff,
   Mail,
   Lock,
-  User,
-  Building2,
   Copy,
   Check,
   ShieldCheck,
@@ -20,7 +18,6 @@ import {
   Package,
   ArrowRight,
   Loader2,
-  ChevronDown,
 } from 'lucide-react';
 
 type LoginFormData = {
@@ -29,26 +26,11 @@ type LoginFormData = {
   rememberMe: boolean;
 };
 
-type RegisterFormData = {
-  fullName: string;
-  pharmacyName: string;
-  role: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  agreeTerms: boolean;
-};
-
 const demoCredentials = [
   { role: 'Administrator', email: 'admin@pharmacare.et', password: 'Pharma@2026' },
   { role: 'Pharmacist', email: 'tigist.haile@pharmacare.et', password: 'Staff@2026' },
   { role: 'Inventory Manager', email: 'dawit.tesfaye@pharmacare.et', password: 'Invent@2026' },
-];
-
-const roleOptions = [
-  { value: 'pharmacist', label: 'Pharmacist' },
-  { value: 'inventory_manager', label: 'Inventory Manager' },
-  { value: 'admin', label: 'Administrator' },
+  { role: 'Cashier', email: 'meron.bekele@pharmacare.et', password: 'Cashier@2026' },
 ];
 
 function CopyButton({ text }: { text: string }) {
@@ -76,26 +58,12 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function AuthForm() {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const loginForm = useForm<LoginFormData>({
     defaultValues: { email: '', password: '', rememberMe: false },
-  });
-
-  const registerForm = useForm<RegisterFormData>({
-    defaultValues: {
-      fullName: '',
-      pharmacyName: '',
-      role: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      agreeTerms: false,
-    },
   });
 
   const handleLoginSubmit = async (data: LoginFormData) => {
@@ -108,30 +76,6 @@ export default function AuthForm() {
       router.push('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Invalid credentials');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegisterSubmit = async (data: RegisterFormData) => {
-    if (data.password !== data.confirmPassword) {
-      registerForm.setError('confirmPassword', { message: 'Passwords do not match' });
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const { api } = await import('@/lib/api');
-      await api.register({
-        email: data.email,
-        password: data.password,
-        fullName: data.fullName,
-        pharmacyName: data.pharmacyName,
-        role: data.role,
-      });
-      toast.success('Account created successfully!');
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
@@ -225,26 +169,8 @@ export default function AuthForm() {
             <span className="font-bold text-slate-800 text-lg">PharmaCare</span>
           </div>
 
-          {/* Tabs */}
-          <div className="flex bg-slate-100 p-1 rounded-xl mb-8">
-            {(['login', 'register'] as const).map((tab) => (
-              <button
-                key={`tab-${tab}`}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  activeTab === tab
-                    ? 'bg-white text-teal-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {tab === 'login' ? 'Sign In' : 'Create Account'}
-              </button>
-            ))}
-          </div>
-
           {/* Login Form */}
-          {activeTab === 'login' && (
-            <div className="animate-fade-in">
+          <div>
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-800">Welcome back</h2>
                 <p className="text-sm text-slate-500 mt-1">
@@ -395,218 +321,6 @@ export default function AuthForm() {
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Register Form */}
-          {activeTab === 'register' && (
-            <div className="animate-fade-in">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Create account</h2>
-                <p className="text-sm text-slate-500 mt-1">
-                  Set up your pharmacy on PharmaCare
-                </p>
-              </div>
-
-              <form
-                onSubmit={registerForm.handleSubmit(handleRegisterSubmit)}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Full name */}
-                  <div>
-                    <label className="form-label">Full name</label>
-                    <div className="relative">
-                      <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-                      <input
-                        type="text"
-                        placeholder="Abebe Bekele"
-                        className={`form-input ${registerForm.formState.errors.fullName ? 'form-input-error' : ''}`}
-                        style={{ paddingLeft: '2.5rem' }}
-                        {...registerForm.register('fullName', {
-                          required: 'Full name is required',
-                          minLength: { value: 2, message: 'At least 2 characters' },
-                        })}
-                      />
-                    </div>
-                    {registerForm.formState.errors.fullName && (
-                      <p className="form-error">{registerForm.formState.errors.fullName.message}</p>
-                    )}
-                  </div>
-
-                  {/* Pharmacy name */}
-                  <div>
-                    <label className="form-label">Pharmacy name</label>
-                    <div className="relative">
-                      <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-                      <input
-                        type="text"
-                        placeholder="City Pharmacy"
-                        className={`form-input ${registerForm.formState.errors.pharmacyName ? 'form-input-error' : ''}`}
-                        style={{ paddingLeft: '2.5rem' }}
-                        {...registerForm.register('pharmacyName', {
-                          required: 'Pharmacy name is required',
-                        })}
-                      />
-                    </div>
-                    {registerForm.formState.errors.pharmacyName && (
-                      <p className="form-error">{registerForm.formState.errors.pharmacyName.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Role */}
-                <div>
-                  <label className="form-label">Your role</label>
-                  <p className="text-xs text-slate-400 mb-1.5">
-                    Determines your access level within PharmaCare
-                  </p>
-                  <div className="relative">
-                    <select
-                      className={`form-input appearance-none pr-9 ${registerForm.formState.errors.role ? 'form-input-error' : ''}`}
-                      {...registerForm.register('role', { required: 'Please select your role' })}
-                    >
-                      <option value="">Select your role...</option>
-                      {roleOptions.map((r) => (
-                        <option key={`role-${r.value}`} value={r.value}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  </div>
-                  {registerForm.formState.errors.role && (
-                    <p className="form-error">{registerForm.formState.errors.role.message}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="form-label">Work email</label>
-                  <div className="relative">
-                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-                    <input
-                      type="email"
-                      placeholder="abebe@pharmacy.et"
-                      className={`form-input ${registerForm.formState.errors.email ? 'form-input-error' : ''}`}
-                      style={{ paddingLeft: '2.5rem' }}
-                      {...registerForm.register('email', {
-                        required: 'Email is required',
-                        pattern: {
-                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                          message: 'Enter a valid email',
-                        },
-                      })}
-                    />
-                  </div>
-                  {registerForm.formState.errors.email && (
-                    <p className="form-error">{registerForm.formState.errors.email.message}</p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="form-label">Password</label>
-                  <p className="text-xs text-slate-400 mb-1.5">
-                    Minimum 8 characters, include a number and symbol
-                  </p>
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a strong password"
-                      className={`form-input pr-10 ${registerForm.formState.errors.password ? 'form-input-error' : ''}`}
-                      style={{ paddingLeft: '2.5rem' }}
-                      {...registerForm.register('password', {
-                        required: 'Password is required',
-                        minLength: { value: 8, message: 'Minimum 8 characters' },
-                        pattern: {
-                          value: /^(?=.*[0-9])(?=.*[!@#$%^&*])/,
-                          message: 'Include at least one number and one symbol',
-                        },
-                      })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                  {registerForm.formState.errors.password && (
-                    <p className="form-error">{registerForm.formState.errors.password.message}</p>
-                  )}
-                </div>
-
-                {/* Confirm password */}
-                <div>
-                  <label className="form-label">Confirm password</label>
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Repeat your password"
-                      className={`form-input pr-10 ${registerForm.formState.errors.confirmPassword ? 'form-input-error' : ''}`}
-                      style={{ paddingLeft: '2.5rem' }}
-                      {...registerForm.register('confirmPassword', {
-                        required: 'Please confirm your password',
-                      })}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                  {registerForm.formState.errors.confirmPassword && (
-                    <p className="form-error">{registerForm.formState.errors.confirmPassword.message}</p>
-                  )}
-                </div>
-
-                {/* Terms */}
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    id="agreeTerms"
-                    className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 mt-0.5"
-                    {...registerForm.register('agreeTerms', {
-                      required: 'You must agree to the terms',
-                    })}
-                  />
-                  <label htmlFor="agreeTerms" className="text-sm text-slate-600 cursor-pointer leading-relaxed">
-                    I agree to PharmaCare&apos;s{' '}
-                    <span className="text-teal-600 hover:text-teal-700 font-medium cursor-pointer">
-                      Terms of Service
-                    </span>{' '}
-                    and{' '}
-                    <span className="text-teal-600 hover:text-teal-700 font-medium cursor-pointer">
-                      Privacy Policy
-                    </span>
-                  </label>
-                </div>
-                {registerForm.formState.errors.agreeTerms && (
-                  <p className="form-error">{registerForm.formState.errors.agreeTerms.message}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-3"
-                >
-                  {isLoading ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <>
-                      <span>Create Account</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          )}
         </div>
       </div>
     </div>

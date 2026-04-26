@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import { 
   FileText, 
   Plus, 
@@ -16,7 +18,8 @@ import {
   AlertCircle,
   Eye,
   Download,
-  Printer
+  Printer,
+  Loader2
 } from 'lucide-react';
 
 interface Prescription {
@@ -24,7 +27,7 @@ interface Prescription {
   prescriptionNo: string;
   patientName: string;
   patientAge: number;
-  patientGender: 'Male' | 'Female';
+  patientGender: 'Male' | 'Female' | 'male' | 'female';
   doctorName: string;
   doctorLicense: string;
   date: string;
@@ -35,7 +38,7 @@ interface Prescription {
     duration: string;
     quantity: number;
   }[];
-  status: 'pending' | 'dispensed' | 'partial' | 'cancelled';
+  status: 'pending' | 'dispensed' | 'partial' | 'cancelled' | 'filled';
   notes?: string;
   dispensedBy?: string;
   dispensedAt?: string;
@@ -125,10 +128,50 @@ const MOCK_PRESCRIPTIONS: Prescription[] = [
 ];
 
 export default function PrescriptionPage() {
-  const [prescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+
+  useEffect(() => {
+    loadPrescriptions();
+  }, []);
+
+  const loadPrescriptions = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getPrescriptions();
+      // The API returns { prescriptions: [...], totalPages, currentPage, total }
+      const data = response.prescriptions || response;
+      setPrescriptions(data.map((p: any) => ({
+        id: p._id,
+        prescriptionNo: p.prescriptionNumber,
+        patientName: p.patientName,
+        patientAge: p.patientAge,
+        patientGender: p.patientGender === 'female' ? 'Female' : 'Male',
+        doctorName: p.doctorName,
+        doctorLicense: p.doctorLicense,
+        date: new Date(p.issueDate).toISOString().split('T')[0],
+        medicines: p.medicines.map((m: any) => ({
+          name: m.medicineName,
+          dosage: m.dosage,
+          frequency: m.frequency,
+          duration: m.duration,
+          quantity: m.quantity,
+        })),
+        status: p.status === 'filled' ? 'dispensed' : p.status,
+        notes: p.diagnosis,
+        dispensedBy: p.filledBy?.fullName,
+        dispensedAt: p.filledDate ? new Date(p.filledDate).toLocaleString() : undefined,
+      })));
+    } catch (error: any) {
+      toast.error('Using offline data - ' + (error.message || 'Failed to load prescriptions'));
+      setPrescriptions(MOCK_PRESCRIPTIONS);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPrescriptions = prescriptions.filter(rx => {
     const matchesSearch = 

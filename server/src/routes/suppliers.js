@@ -7,10 +7,11 @@ const { checkPermission } = require('../middleware/rbac');
 // Get all suppliers
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { status, category, search, page = 1, limit = 50 } = req.query;
+    const startTime = Date.now();
+    const { status, category, search, page = 1, limit = 100 } = req.query;
     
     const query = {};
-    if (status) query.status = status;
+    if (status && status !== 'all') query.status = status;
     if (category) query.category = category;
     if (search) {
       query.$or = [
@@ -20,20 +21,28 @@ router.get('/', authenticate, async (req, res) => {
       ];
     }
 
+    const queryStartTime = Date.now();
+    // Use lean() for faster queries and select only needed fields
+    // Removed countDocuments for speed - just return all suppliers
     const suppliers = await Supplier.find(query)
+      .select('name contactPerson phone email address category status rating totalOrders lastOrderDate createdAt')
       .sort({ name: 1 })
       .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .lean()
+      .exec();
+    
+    const queryEndTime = Date.now();
 
-    const count = await Supplier.countDocuments(query);
+    console.log(`Suppliers query took ${queryEndTime - queryStartTime}ms, total: ${queryEndTime - startTime}ms, count: ${suppliers.length}`);
 
     res.json({
       suppliers,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      total: count
+      totalPages: 1,
+      currentPage: 1,
+      total: suppliers.length
     });
   } catch (error) {
+    console.error('Suppliers route error:', error);
     res.status(500).json({ message: error.message });
   }
 });

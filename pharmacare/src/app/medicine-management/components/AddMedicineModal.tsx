@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Loader2, Pill, Package, DollarSign, Building2, ChevronDown } from 'lucide-react';
+import { X, Loader2, Pill, Package, DollarSign, Building2, ChevronDown, Calendar } from 'lucide-react';
 import type { Medicine } from './MedicineTable';
 
 interface AddMedicineModalProps {
@@ -27,6 +27,8 @@ type FormData = {
   gstRate: number;
   schedule: string;
   status: Medicine['status'];
+  productionDate: string;
+  expiryDate: string;
 };
 
 const CATEGORIES = ['Antibiotics', 'Antidiabetics', 'Cardiovascular', 'Gastrointestinal', 'Antihistamines', 'Analgesics', 'Vitamins & Supplements', 'Dermatology', 'Respiratory', 'Neurology'];
@@ -64,6 +66,8 @@ export default function AddMedicineModal({
       gstRate: 12,
       schedule: 'H',
       status: 'active',
+      productionDate: '',
+      expiryDate: '',
     },
   });
 
@@ -85,11 +89,14 @@ export default function AddMedicineModal({
         gstRate: medicine.gstRate,
         schedule: medicine.schedule,
         status: medicine.status,
+        productionDate: medicine.productionDate ? new Date(medicine.productionDate).toISOString().split('T')[0] : '',
+        expiryDate: medicine.expiryDate ? new Date(medicine.expiryDate).toISOString().split('T')[0] : '',
       });
     }
   }, [medicine, reset]);
 
   const handleFormSubmit = async (data: FormData) => {
+    console.log('Form data being submitted:', data);
     await new Promise((r) => setTimeout(r, 600));
     onSubmit(data);
   };
@@ -399,6 +406,66 @@ export default function AddMedicineModal({
                     </select>
                     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Production & Expiry Dates */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar size={14} className="text-teal-600" />
+                <h3 className="text-sm font-semibold text-slate-700">Production & Expiry Dates</h3>
+                <div className="flex-1 h-px bg-slate-100 ml-2" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Production Date */}
+                <div>
+                  <label className="form-label">Production date <span className="text-red-500">*</span></label>
+                  <p className="text-xs text-slate-400 mb-1.5">Date when the medicine was manufactured</p>
+                  <div className="relative">
+                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      className={`form-input pl-9 ${errors.productionDate ? 'form-input-error' : ''}`}
+                      {...register('productionDate', { 
+                        required: 'Production date is required',
+                        validate: (value) => {
+                          const date = new Date(value);
+                          const today = new Date();
+                          if (date > today) {
+                            return 'Production date cannot be in the future';
+                          }
+                          return true;
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.productionDate && <p className="form-error">{errors.productionDate.message}</p>}
+                </div>
+
+                {/* Expiry Date */}
+                <div>
+                  <label className="form-label">Expiry date <span className="text-red-500">*</span></label>
+                  <p className="text-xs text-slate-400 mb-1.5">Date when the medicine expires</p>
+                  <div className="relative">
+                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="date"
+                      className={`form-input pl-9 ${errors.expiryDate ? 'form-input-error' : ''}`}
+                      {...register('expiryDate', { 
+                        required: 'Expiry date is required',
+                        validate: (value, formValues) => {
+                          const expiryDate = new Date(value);
+                          const productionDate = new Date(formValues.productionDate);
+                          if (expiryDate <= productionDate) {
+                            return 'Expiry date must be after production date';
+                          }
+                          return true;
+                        }
+                      })}
+                    />
+                  </div>
+                  {errors.expiryDate && <p className="form-error">{errors.expiryDate.message}</p>}
                 </div>
               </div>
             </div>

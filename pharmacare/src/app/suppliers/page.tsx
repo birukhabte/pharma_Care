@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import {
   Truck,
   CheckCircle,
@@ -16,6 +18,7 @@ import {
   Star,
   ArrowUpDown,
   X,
+  Loader2,
 } from 'lucide-react';
 
 interface Supplier {
@@ -113,7 +116,7 @@ function AddSupplierModal({ onClose }: AddSupplierModalProps) {
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
           <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">Add Supplier</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Add Supplier</button>
         </div>
       </div>
     </div>
@@ -121,43 +124,90 @@ function AddSupplierModal({ onClose }: AddSupplierModalProps) {
 }
 
 export default function SuppliersPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortAsc, setSortAsc] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const activeCount = suppliersData.filter((s) => s.status === 'active').length;
-  const pendingCount = suppliersData.filter((s) => s.status === 'pending').length;
-  const inactiveCount = suppliersData.filter((s) => s.status === 'inactive').length;
-  const totalPendingOrders = suppliersData.reduce((sum, s) => sum + s.pendingOrders, 0);
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const loadSuppliers = async () => {
+    try {
+      const startTime = performance.now();
+      const response = await api.getSuppliers();
+      const endTime = performance.now();
+      console.log(`Suppliers API call took ${(endTime - startTime).toFixed(2)}ms`);
+      
+      // The API returns { suppliers: [...], totalPages, currentPage, total }
+      const data = response.suppliers || response;
+      console.log(`Loaded ${data.length} suppliers`);
+      
+      setSuppliers(data.map((s: any) => ({
+        id: s._id,
+        name: s.name,
+        contactPerson: s.contactPerson,
+        phone: s.phone,
+        email: s.email,
+        city: s.address?.city || '',
+        category: s.category,
+        rating: s.rating || 0,
+        totalOrders: s.totalOrders || 0,
+        pendingOrders: 0, // Not in database yet
+        lastOrderDate: s.lastOrderDate || s.createdAt ? new Date(s.lastOrderDate || s.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: s.status,
+      })));
+    } catch (error: any) {
+      console.error('Suppliers load error:', error);
+      toast.error('Using offline data - ' + (error.message || 'Failed to load suppliers'));
+      setSuppliers(suppliersData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Memoize expensive calculations
+  const { activeCount, pendingCount, inactiveCount, totalPendingOrders } = React.useMemo(() => ({
+    activeCount: suppliers.filter((s) => s.status === 'active').length,
+    pendingCount: suppliers.filter((s) => s.status === 'pending').length,
+    inactiveCount: suppliers.filter((s) => s.status === 'inactive').length,
+    totalPendingOrders: suppliers.reduce((sum, s) => sum + s.pendingOrders, 0),
+  }), [suppliers]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
   };
 
-  const filtered = suppliersData
-    .filter((s) => {
-      const matchSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.contactPerson.toLowerCase().includes(search.toLowerCase()) ||
-        s.category.toLowerCase().includes(search.toLowerCase()) ||
-        s.city.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === 'all' || s.status === filterStatus;
-      return matchSearch && matchStatus;
-    })
-    .sort((a, b) => {
-      let valA: string | number = a[sortKey];
-      let valB: string | number = b[sortKey];
-      if (typeof valA === 'string') valA = valA.toLowerCase();
-      if (typeof valB === 'string') valB = valB.toLowerCase();
-      if (valA < valB) return sortAsc ? -1 : 1;
-      if (valA > valB) return sortAsc ? 1 : -1;
-      return 0;
-    });
+  // Memoize filtered and sorted data
+  const filtered = React.useMemo(() => {
+    return suppliers
+      .filter((s) => {
+        const matchSearch =
+          s.name.toLowerCase().includes(search.toLowerCase()) ||
+          s.contactPerson.toLowerCase().includes(search.toLowerCase()) ||
+          s.category.toLowerCase().includes(search.toLowerCase()) ||
+          s.city.toLowerCase().includes(search.toLowerCase());
+        const matchStatus = filterStatus === 'all' || s.status === filterStatus;
+        return matchSearch && matchStatus;
+      })
+      .sort((a, b) => {
+        let valA: string | number = a[sortKey];
+        let valB: string | number = b[sortKey];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return sortAsc ? -1 : 1;
+        if (valA > valB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+  }, [suppliers, search, filterStatus, sortKey, sortAsc]);
 
-  const renderStars = (rating: number) => {
+  // Memoize star rendering function
+  const renderStars = React.useCallback((rating: number) => {
     return (
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -170,7 +220,20 @@ export default function SuppliersPage() {
         <span className="text-xs text-slate-500 ml-1">{rating.toFixed(1)}</span>
       </div>
     );
-  };
+  }, []);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="p-6 flex items-center justify-center h-96">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={32} className="animate-spin text-teal-600" />
+            <p className="text-sm text-slate-500">Loading suppliers...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -183,7 +246,7 @@ export default function SuppliersPage() {
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus size={15} />
             Add Supplier

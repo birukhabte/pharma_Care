@@ -27,6 +27,8 @@ export interface Medicine {
   hsnCode: string;
   gstRate: number;
   schedule: string;
+  productionDate?: string;
+  expiryDate?: string;
 }
 
 const MOCK_MEDICINES: Medicine[] = [
@@ -378,15 +380,23 @@ export default function MedicineTable() {
 
   useEffect(() => {
     setUserRole(getUserRole());
+    setLoading(true);
     loadMedicines();
   }, []);
 
   const loadMedicines = async () => {
     try {
-      setLoading(true);
+      const startTime = performance.now();
       const data = await api.getMedicines();
-      setMedicines(data.map((m: any) => ({ ...m, id: m._id })));
+      const endTime = performance.now();
+      console.log(`Medicines API call took ${(endTime - startTime).toFixed(2)}ms`);
+      
+      const medicines = data.medicines || data;
+      console.log(`Loaded ${medicines.length} medicines`);
+      
+      setMedicines(medicines.map((m: any) => ({ ...m, id: m._id })));
     } catch (error: any) {
+      console.error('Medicines load error:', error);
       // If API fails, use mock data
       setMedicines(MOCK_MEDICINES);
       toast.error('Using offline data - ' + (error.message || 'Failed to load medicines'));
@@ -586,13 +596,14 @@ export default function MedicineTable() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white" />
             <input
               type="text"
               placeholder="Search medicines..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="form-input pl-9 py-2 text-sm"
+              className="pl-9 py-2 text-sm w-full rounded-lg border-none text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-green-700"
+              style={{ background: 'linear-gradient(135deg, rgb(9, 150, 33) 0%, #0d2b36 100%)' }}
             />
           </div>
 
@@ -604,7 +615,7 @@ export default function MedicineTable() {
                 onClick={() => { setCategoryFilter(cat); setCurrentPage(1); }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                   categoryFilter === cat
-                    ? 'bg-teal-700 text-white' :'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-green-50 hover:text-green-700'
                 }`}
               >
                 {cat}

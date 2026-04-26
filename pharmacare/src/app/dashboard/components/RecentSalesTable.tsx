@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ExternalLink, Receipt } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
+import { ExternalLink, Receipt, Loader2 } from 'lucide-react';
 
 const recentSales = [
   {
@@ -90,6 +92,50 @@ const paymentBadge: Record<string, string> = {
 
 export default function RecentSalesTable() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadSales();
+  }, []);
+
+  const loadSales = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getRecentSales();
+      setSales(data.map((sale: any) => ({
+        id: sale.invoiceNo || sale.id,
+        customer: sale.customerName,
+        items: sale.items,
+        amount: sale.amount,
+        paymentMethod: sale.paymentMethod,
+        status: 'completed',
+        time: new Date(sale.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        prescriptionNo: null,
+      })));
+    } catch (error: any) {
+      toast.error('Failed to load recent sales');
+      setSales(recentSales);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-semibold text-slate-800">Recent Sales</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Today&apos;s counter transactions</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 size={32} className="animate-spin text-teal-600" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-card overflow-hidden">
@@ -119,7 +165,7 @@ export default function RecentSalesTable() {
             </tr>
           </thead>
           <tbody>
-            {recentSales.map((sale) => (
+            {sales.map((sale) => (
               <tr
                 key={sale.id}
                 className="table-row cursor-pointer"
@@ -176,10 +222,10 @@ export default function RecentSalesTable() {
 
       <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
         <p className="text-xs text-slate-500">
-          Showing 7 of 91 transactions today
+          Showing {sales.length} recent transactions
         </p>
         <p className="text-xs font-semibold text-slate-700 font-mono tabular-nums">
-          Total: Br 4,821.60
+          Total: Br {sales.reduce((sum, s) => sum + s.amount, 0).toFixed(2)}
         </p>
       </div>
     </div>

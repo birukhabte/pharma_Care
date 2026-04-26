@@ -2,6 +2,7 @@ const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const Medicine = require('../models/Medicine');
 const Sale = require('../models/Sale');
+const Order = require('../models/Order');
 
 const router = express.Router();
 
@@ -9,11 +10,44 @@ router.get('/metrics', authMiddleware, async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-    const todaySales = await Sale.find({ createdAt: { $gte: today } });
-    const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    const totalOrders = todaySales.length;
+    // Get today's completed orders
+    const todayOrders = await Order.find({ 
+      status: 'completed',
+      completedAt: { $gte: today }
+    });
+    
+    // Get yesterday's completed orders for comparison
+    const yesterdayOrders = await Order.find({
+      status: 'completed',
+      completedAt: { $gte: yesterday, $lt: today }
+    });
+
+    // Calculate today's metrics
+    const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalOrders = todayOrders.length;
     const avgOrderValue = totalOrders > 0 ? todayRevenue / totalOrders : 0;
+
+    // Calculate yesterday's metrics for comparison
+    const yesterdayRevenue = yesterdayOrders.reduce((sum, order) => sum + order.total, 0);
+    const yesterdayOrderCount = yesterdayOrders.length;
+    const yesterdayAvgOrderValue = yesterdayOrderCount > 0 ? yesterdayRevenue / yesterdayOrderCount : 0;
+
+    // Calculate percentage changes
+    const todayRevenueChange = yesterdayRevenue > 0 
+      ? ((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 
+      : 0;
+    
+    const totalOrdersChange = yesterdayOrderCount > 0
+      ? ((totalOrders - yesterdayOrderCount) / yesterdayOrderCount) * 100
+      : 0;
+    
+    const avgOrderValueChange = yesterdayAvgOrderValue > 0
+      ? ((avgOrderValue - yesterdayAvgOrderValue) / yesterdayAvgOrderValue) * 100
+      : 0;
 
     const lowStockMedicines = await Medicine.countDocuments({
       $expr: { $lt: ['$stockQty', '$reorderLevel'] }
@@ -21,15 +55,16 @@ router.get('/metrics', authMiddleware, async (req, res) => {
 
     res.json({
       todayRevenue: todayRevenue.toFixed(2),
-      todayRevenueChange: 8.2,
+      todayRevenueChange: parseFloat(todayRevenueChange.toFixed(1)),
       totalOrders,
-      totalOrdersChange: -3.1,
+      totalOrdersChange: parseFloat(totalOrdersChange.toFixed(1)),
       avgOrderValue: avgOrderValue.toFixed(2),
-      avgOrderValueChange: 12.5,
+      avgOrderValueChange: parseFloat(avgOrderValueChange.toFixed(1)),
       lowStockItems: lowStockMedicines,
-      lowStockItemsChange: 2
+      lowStockItemsChange: 0
     });
   } catch (error) {
+    console.error('Dashboard metrics error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -58,23 +93,25 @@ router.get('/top-medicines', authMiddleware, (req, res) => {
 
 router.get('/recent-sales', authMiddleware, async (req, res) => {
   try {
-    const sales = await Sale.find()
-      .sort({ createdAt: -1 })
+    // Get recent completed orders
+    const orders = await Order.find({ status: 'completed' })
+      .sort({ completedAt: -1 })
       .limit(10)
-      .select('invoiceNo customerName items totalAmount paymentMethod createdAt');
+      .select('orderNumber customerName items total paymentMethod completedAt completedBy');
 
-    const formattedSales = sales.map(sale => ({
-      id: sale._id,
-      invoiceNo: sale.invoiceNo,
-      customerName: sale.customerName,
-      items: sale.items.length,
-      amount: sale.totalAmount,
-      paymentMethod: sale.paymentMethod,
-      timestamp: sale.createdAt
+    const formattedSales = orders.map(order => ({
+      id: order._id,
+      invoiceNo: order.orderNumber,
+      customerName: order.customerName,
+      items: order.items.length,
+      amount: order.total,
+      paymentMethod: order.paymentMethod || 'N/A',
+      timestamp: order.completedAt || order.createdAt
     }));
 
     res.json(formattedSales);
   } catch (error) {
+    console.error('Recent sales error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

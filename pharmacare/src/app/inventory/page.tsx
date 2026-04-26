@@ -33,6 +33,8 @@ interface InventoryItem {
   lastRestocked: string;
   status: 'in-stock' | 'low-stock' | 'out-of-stock' | 'overstocked';
   type: ItemType;
+  productionDate?: string;
+  expiryDate?: string;
 }
 
 const statusConfig = {
@@ -55,6 +57,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false);
   const [medicines, setMedicines] = useState<InventoryItem[]>([]);
   const [products, setProducts] = useState<InventoryItem[]>([]);
+  const [displayCount, setDisplayCount] = useState(20); // Start with 20 items
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -66,8 +69,34 @@ export default function InventoryPage() {
     location: '',
   });
 
+  // Intersection Observer for lazy loading
+  const observerTarget = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          // Load more items when scrolling to bottom
+          setDisplayCount((prev) => prev + 20);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [loading]);
+
   // Load data when tab changes
   useEffect(() => {
+    setDisplayCount(20); // Reset display count when switching tabs
     if (activeTab === 'medicine') {
       loadMedicines();
     } else {
@@ -78,25 +107,36 @@ export default function InventoryPage() {
   const loadMedicines = async () => {
     setLoading(true);
     try {
+      console.log('Fetching medicines from API...');
       const response = await api.getMedicines();
+      console.log('API Response:', response);
+      
       const data = response.medicines || response;
+      console.log('Extracted data:', data);
+      console.log(`Loading ${data.length} medicines from database`);
       
       // Map medicines to inventory item format
-      const mappedMedicines: InventoryItem[] = data.map((med: any) => ({
-        id: med._id,
-        name: med.name,
-        category: med.category || 'General',
-        sku: med.sku || med._id.slice(-6).toUpperCase(),
-        currentStock: med.stock || 0,
-        minStock: med.minStock || 0,
-        maxStock: med.maxStock || 1000,
-        unit: med.unit || 'Units',
-        location: med.location || 'Warehouse',
-        lastRestocked: med.lastRestocked || new Date().toISOString().split('T')[0],
-        status: calculateStatus(med.stock || 0, med.minStock || 0, med.maxStock || 1000),
-        type: 'medicine'
-      }));
+      const mappedMedicines: InventoryItem[] = data.map((med: any) => {
+        console.log('Mapping medicine:', med);
+        return {
+          id: med._id || med.id,
+          name: med.name,
+          category: med.category || 'General',
+          sku: med.hsnCode || med._id?.slice(-6).toUpperCase() || 'N/A',
+          currentStock: med.stockQty || med.stock || 0,
+          minStock: med.reorderLevel || med.minStock || 0,
+          maxStock: med.maxStock || 1000,
+          unit: med.dosageForm || med.unit || 'Units',
+          location: med.location || 'Pharmacy',
+          lastRestocked: med.updatedAt ? new Date(med.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: calculateStatus(med.stockQty || med.stock || 0, med.reorderLevel || med.minStock || 0, med.maxStock || 1000),
+          type: 'medicine',
+          productionDate: med.productionDate ? new Date(med.productionDate).toISOString().split('T')[0] : undefined,
+          expiryDate: med.expiryDate ? new Date(med.expiryDate).toISOString().split('T')[0] : undefined
+        };
+      });
       
+      console.log('Mapped medicines:', mappedMedicines);
       setMedicines(mappedMedicines);
     } catch (error) {
       console.error('Failed to load medicines:', error);
@@ -149,7 +189,11 @@ export default function InventoryPage() {
   // Reset category filter when switching tabs
   const handleTabChange = (tab: ItemType) => {
     setActiveTab(tab);
-    setCategoryFilter('all');
+    if (tab === 'non-medicine') {
+      setCategoryFilter('Medical Supplies');
+    } else {
+      setCategoryFilter('all');
+    }
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -238,25 +282,32 @@ export default function InventoryPage() {
     else { setSortKey(key); setSortAsc(true); }
   };
 
-  const filtered = tabFilteredData
-    .filter((item) => {
-      const matchSearch =
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.sku.toLowerCase().includes(search.toLowerCase()) ||
-        item.category.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === 'all' || item.status === filterStatus;
-      const matchCategory = categoryFilter === 'all' || item.category === categoryFilter;
-      return matchSearch && matchStatus && matchCategory;
-    })
-    .sort((a, b) => {
-      let valA: string | number = a[sortKey];
-      let valB: string | number = b[sortKey];
-      if (typeof valA === 'string') valA = valA.toLowerCase();
-      if (typeof valB === 'string') valB = valB.toLowerCase();
-      if (valA < valB) return sortAsc ? -1 : 1;
-      if (valA > valB) return sortAsc ? 1 : -1;
-      return 0;
-    });
+  // Memoize filtered data for performance
+  const filtered = React.useMemo(() => {
+    return tabFilteredData
+      .filter((item) => {
+        const matchSearch =
+          item.name.toLowerCase().includes(search.toLowerCase()) ||
+          item.sku.toLowerCase().includes(search.toLowerCase()) ||
+          item.category.toLowerCase().includes(search.toLowerCase());
+        const matchStatus = filterStatus === 'all' || item.status === filterStatus;
+        const matchCategory = categoryFilter === 'all' || item.category === categoryFilter;
+        return matchSearch && matchStatus && matchCategory;
+      })
+      .sort((a, b) => {
+        let valA: string | number = a[sortKey];
+        let valB: string | number = b[sortKey];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return sortAsc ? -1 : 1;
+        if (valA > valB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+  }, [tabFilteredData, search, filterStatus, categoryFilter, sortKey, sortAsc]);
+
+  // Only display a subset of filtered items for lazy loading
+  const displayedItems = filtered.slice(0, displayCount);
+  const hasMore = displayCount < filtered.length;
 
   const getStockBarWidth = (current: number, max: number) => {
     const pct = Math.min((current / max) * 100, 100);
@@ -285,7 +336,7 @@ export default function InventoryPage() {
             <button 
               onClick={() => setShowAddModal(true)}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={15} />
               Add Item
@@ -332,16 +383,6 @@ export default function InventoryPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium text-slate-700">Filter by Category:</span>
-              <button
-                onClick={() => setCategoryFilter('all')}
-                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                  categoryFilter === 'all'
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                All Categories
-              </button>
               <button
                 onClick={() => setCategoryFilter('Medical Supplies')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
@@ -454,7 +495,7 @@ export default function InventoryPage() {
                 <option value="overstocked">Overstocked</option>
               </select>
             </div>
-            <span className="text-xs text-slate-400 ml-auto">{filtered.length} items</span>
+            <span className="text-xs text-slate-400 ml-auto">{filtered.length} items {displayedItems.length < filtered.length && `(showing ${displayedItems.length})`}</span>
           </div>
 
           {/* Table */}
@@ -473,6 +514,12 @@ export default function InventoryPage() {
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Location</th>
+                  {activeTab === 'medicine' && (
+                    <>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Production Date</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Expiry Date</th>
+                    </>
+                  )}
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <button className="flex items-center gap-1 hover:text-slate-700" onClick={() => handleSort('currentStock')}>
                       Stock Level <ArrowUpDown size={12} />
@@ -489,55 +536,96 @@ export default function InventoryPage() {
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-slate-400">
+                    <td colSpan={activeTab === 'medicine' ? 8 : 6} className="text-center py-12 text-slate-400">
                       <RefreshCw size={20} className="animate-spin inline-block mr-2" />
                       Loading inventory...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-slate-400">
+                    <td colSpan={activeTab === 'medicine' ? 8 : 6} className="text-center py-12 text-slate-400">
                       {tabFilteredData.length === 0 
                         ? `No ${activeTab === 'medicine' ? 'medicines' : 'products'} found. Click "Add Item" to get started.`
                         : 'No inventory items match your search.'}
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((item) => {
-                    const cfg = statusConfig[item.status];
-                    return (
-                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-slate-800">{item.name}</p>
-                          <p className="text-xs text-slate-400">{item.sku}</p>
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">{item.category}</td>
-                        <td className="px-4 py-3 text-slate-500 text-xs font-mono">{item.location}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden flex-shrink-0">
-                              <div
-                                className={`h-full rounded-full ${getStockBarColor(item.status)}`}
-                                style={{ width: getStockBarWidth(item.currentStock, item.maxStock) }}
-                              />
+                  <>
+                    {displayedItems.map((item) => {
+                      const cfg = statusConfig[item.status];
+                      const isExpiringSoon = item.expiryDate && new Date(item.expiryDate) <= new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+                      const isExpired = item.expiryDate && new Date(item.expiryDate) < new Date();
+                      
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-slate-800">{item.name}</p>
+                            <p className="text-xs text-slate-400">{item.sku}</p>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">{item.category}</td>
+                          <td className="px-4 py-3 text-slate-500 text-xs font-mono">{item.location}</td>
+                          {activeTab === 'medicine' && (
+                            <>
+                              <td className="px-4 py-3 text-slate-600 text-xs">
+                                {item.productionDate || <span className="text-slate-400">N/A</span>}
+                              </td>
+                              <td className="px-4 py-3 text-xs">
+                                {item.expiryDate ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={isExpired ? 'text-red-600 font-medium' : isExpiringSoon ? 'text-amber-600 font-medium' : 'text-slate-600'}>
+                                      {item.expiryDate}
+                                    </span>
+                                    {isExpired && (
+                                      <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-medium">
+                                        EXPIRED
+                                      </span>
+                                    )}
+                                    {!isExpired && isExpiringSoon && (
+                                      <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">
+                                        EXPIRING SOON
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400">N/A</span>
+                                )}
+                              </td>
+                            </>
+                          )}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden flex-shrink-0">
+                                <div
+                                  className={`h-full rounded-full ${getStockBarColor(item.status)}`}
+                                  style={{ width: getStockBarWidth(item.currentStock, item.maxStock) }}
+                                />
+                              </div>
+                              <span className="text-slate-700 font-medium tabular-nums">
+                                {item.currentStock.toLocaleString()}
+                              </span>
+                              <span className="text-slate-400 text-xs">{item.unit}</span>
                             </div>
-                            <span className="text-slate-700 font-medium tabular-nums">
-                              {item.currentStock.toLocaleString()}
+                            <p className="text-xs text-slate-400 mt-0.5">Min: {item.minStock} / Max: {item.maxStock}</p>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 text-xs">{item.lastRestocked}</td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.color}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                              {cfg.label}
                             </span>
-                            <span className="text-slate-400 text-xs">{item.unit}</span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-0.5">Min: {item.minStock} / Max: {item.maxStock}</p>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs">{item.lastRestocked}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                            {cfg.label}
-                          </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {/* Lazy load trigger */}
+                    {hasMore && (
+                      <tr ref={observerTarget}>
+                        <td colSpan={activeTab === 'medicine' ? 8 : 6} className="text-center py-4 text-slate-400 text-sm">
+                          Loading more items...
                         </td>
                       </tr>
-                    );
-                  })
+                    )}
+                  </>
                 )}
               </tbody>
             </table>
@@ -711,7 +799,7 @@ export default function InventoryPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Adding...' : 'Add Item'}
                 </button>

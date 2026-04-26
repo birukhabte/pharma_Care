@@ -26,6 +26,8 @@ interface MetricCardProps {
 }
 
 function MetricCard({ title, value, subtitle, trend, icon, variant, size = 'normal' }: MetricCardProps) {
+  const isRevenueCard = title === "Today's Revenue";
+  
   const variantStyles: Record<string, string> = {
     default: 'bg-white border-slate-200',
     warning: 'bg-amber-50 border-amber-200',
@@ -60,48 +62,57 @@ function MetricCard({ title, value, subtitle, trend, icon, variant, size = 'norm
 
   return (
     <div
-      className={`metric-card border ${variantStyles[variant]} ${
+      className={`${isRevenueCard ? '' : 'bg-white'} rounded-[40px] p-2.5 border ${isRevenueCard ? 'border-emerald-800' : 'border-slate-200'} transition-all min-h-[100px] ${
         size === 'hero' ? 'row-span-1' : ''
-      }`}
+      } hover:shadow-md`}
+      style={isRevenueCard ? { 
+        background: 'linear-gradient(135deg, #1a535c 0%, #0d2b36 100%)',
+        boxShadow: '0 1px 3px rgba(8, 89, 78, 0.2)' 
+      } : { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}
     >
-      <div className="flex items-start justify-between">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconStyles[variant]}`}>
-          {icon}
-        </div>
-        {trend && (
-          <div
-            className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-              trend.direction === 'up' ?'bg-emerald-100 text-emerald-700'
-                : trend.direction === 'down' ?'bg-red-100 text-red-700' :'bg-slate-100 text-slate-600'
+      <div className="flex items-start justify-between gap-3">
+        {/* Left side - Content */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className={`text-[10px] font-semibold uppercase tracking-wide ${isRevenueCard ? 'text-white' : titleStyles[variant]}`}>
+              {title}
+            </p>
+            {trend && (
+              <div
+                className={`flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                  isRevenueCard ? 'bg-white/20 text-white' :
+                  trend.direction === 'up' ?'bg-emerald-100 text-emerald-700'
+                    : trend.direction === 'down' ?'bg-red-100 text-red-700' :'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {trend.direction === 'up' ? (
+                  <TrendingUp size={8} />
+                ) : trend.direction === 'down' ? (
+                  <TrendingDown size={8} />
+                ) : (
+                  <Minus size={8} />
+                )}
+                {trend.value}
+              </div>
+            )}
+          </div>
+          <p
+            className={`font-bold tabular-nums ${isRevenueCard ? 'text-white' : valueStyles[variant]} ${
+              size === 'hero' ? 'text-lg' : 'text-base'
             }`}
           >
-            {trend.direction === 'up' ? (
-              <TrendingUp size={11} />
-            ) : trend.direction === 'down' ? (
-              <TrendingDown size={11} />
-            ) : (
-              <Minus size={11} />
-            )}
-            {trend.value}
-          </div>
-        )}
+            {value}
+          </p>
+          {trend && (
+            <p className={`text-[10px] ${isRevenueCard ? 'text-white/80' : 'text-slate-400'} mt-1`}>{trend.label}</p>
+          )}
+        </div>
+        
+        {/* Right side - Icon */}
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isRevenueCard ? 'bg-white/20 text-white' : iconStyles[variant]}`}>
+          {icon}
+        </div>
       </div>
-      <div>
-        <p className={`text-xs font-semibold uppercase tracking-wide ${titleStyles[variant]}`}>
-          {title}
-        </p>
-        <p
-          className={`font-bold tabular-nums mt-1 ${valueStyles[variant]} ${
-            size === 'hero' ? 'text-4xl' : 'text-2xl'
-          }`}
-        >
-          {value}
-        </p>
-        <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
-      </div>
-      {trend && (
-        <p className="text-xs text-slate-400">{trend.label}</p>
-      )}
     </div>
   );
 }
@@ -136,15 +147,35 @@ export default function DashboardMetrics() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 size={32} className="animate-spin text-teal-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(6)].map((_, index) => (
+          <div
+            key={index}
+            className="relative overflow-hidden bg-[#065f46] rounded-[40px] p-2.5 border border-emerald-800 min-h-[100px]"
+            style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)' }}
+          >
+            {/* Shimmer overlay */}
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            
+            <div className="flex items-start justify-between mb-1.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-900/50" />
+              <div className="h-4 w-12 bg-emerald-900/50 rounded-full" />
+            </div>
+            <div>
+              <div className="h-2.5 w-16 bg-emerald-900/50 rounded mb-1" />
+              <div className="h-4 w-24 bg-emerald-900/50 rounded mb-1" />
+              <div className="h-2.5 w-32 bg-emerald-900/50 rounded" />
+            </div>
+            <div className="h-2.5 w-20 bg-emerald-900/50 rounded mt-1" />
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    // 6 cards: grid-cols-3, 2 rows of 3
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3 gap-4">
+    // 6 cards: grid-cols-4, 2 rows of 4 (last row has 2 cards)
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Hero: Daily Revenue */}
       <MetricCard
         title="Today's Revenue"
@@ -198,25 +229,25 @@ export default function DashboardMetrics() {
         variant="info"
       />
 
-      {/* Total Active Medicines */}
+      {/* Total Employees */}
       <MetricCard
-        title="Active Medicines"
-        value="1,248"
-        subtitle="SKUs currently in stock"
-        trend={{ value: '0', direction: 'neutral', label: 'No change from last week' }}
+        title="Total Employees"
+        value="24"
+        subtitle="Active staff members"
+        trend={{ value: '+2', direction: 'up', label: 'New hires this month' }}
         icon={<Pill size={20} />}
         variant="default"
       />
 
-      {/* Gross Margin */}
+      {/* Recent Notifications */}
       <MetricCard
-        title="Avg Order Value"
-        value={`Br ${parseFloat(metrics?.avgOrderValue || 0).toFixed(2)}`}
-        subtitle="Average transaction amount"
+        title="Recent Notifications"
+        value="8"
+        subtitle="Unread alerts and messages"
         trend={{ 
-          value: `${parseFloat(metrics?.avgOrderValueChange || 0) > 0 ? '+' : ''}${parseFloat(metrics?.avgOrderValueChange || 0).toFixed(1)}%`, 
-          direction: parseFloat(metrics?.avgOrderValueChange || 0) > 0 ? 'up' : parseFloat(metrics?.avgOrderValueChange || 0) < 0 ? 'down' : 'neutral', 
-          label: 'vs yesterday' 
+          value: '3 urgent', 
+          direction: 'down', 
+          label: 'Requires immediate attention' 
         }}
         icon={<TrendingUp size={20} />}
         variant="default"

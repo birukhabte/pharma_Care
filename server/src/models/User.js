@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  phone: {
+    type: String,
+    trim: true
+  },
   pharmacyName: {
     type: String,
     required: true
@@ -24,6 +28,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['pharmacist', 'inventory_manager', 'admin', 'cashier']
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
+  lastLogin: {
+    type: Date
   }
 }, {
   timestamps: true

@@ -275,9 +275,57 @@ class ApiClient {
     });
   }
 
+  async getSalesAnalytics(filters?: { startDate?: string; endDate?: string; groupBy?: string }) {
+    const params = new URLSearchParams(filters as any);
+    return this.request(`/orders/analytics?${params}`);
+  }
+
   async cancelOrder(id: string) {
     return this.request(`/orders/${id}/cancel`, {
       method: 'POST',
+    });
+  }
+
+  async createSampleOrders() {
+    return this.request('/orders/create-sample-data', {
+      method: 'POST',
+    });
+  }
+
+  // Users
+  async getUsers(filters?: { role?: string; status?: string; search?: string }) {
+    const params = new URLSearchParams(filters as any);
+    return this.request(`/users?${params}`);
+  }
+
+  async getUser(id: string) {
+    return this.request(`/users/${id}`);
+  }
+
+  async createUser(user: any) {
+    return this.request('/users', {
+      method: 'POST',
+      body: JSON.stringify(user),
+    });
+  }
+
+  async updateUser(id: string, user: any) {
+    return this.request(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(user),
+    });
+  }
+
+  async updateUserPassword(id: string, password: string) {
+    return this.request(`/users/${id}/password`, {
+      method: 'PATCH',
+      body: JSON.stringify({ password }),
+    });
+  }
+
+  async deleteUser(id: string) {
+    return this.request(`/users/${id}`, {
+      method: 'DELETE',
     });
   }
 }

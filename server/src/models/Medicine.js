@@ -66,10 +66,26 @@ const medicineSchema = new mongoose.Schema({
     type: String,
     enum: ['OTC', 'H', 'H1', 'X', 'G'],
     default: 'H'
+  },
+  productionDate: {
+    type: Date
+  },
+  expiryDate: {
+    type: Date
   }
 }, {
   timestamps: true
 });
+
+// Indexes for better query performance
+medicineSchema.index({ name: 1 });
+medicineSchema.index({ genericName: 1 });
+medicineSchema.index({ category: 1 });
+medicineSchema.index({ status: 1 });
+medicineSchema.index({ manufacturer: 1 });
+// Compound indexes for common query patterns
+medicineSchema.index({ status: 1, category: 1 });
+medicineSchema.index({ category: 1, name: 1 });
 
 module.exports = mongoose.model('Medicine', medicineSchema);
 // Commit on 2024-06-3 at 9:52

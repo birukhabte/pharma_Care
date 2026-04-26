@@ -17,6 +17,7 @@ const auditLogRoutes = require('./routes/auditLogs');
 const seedRoutes = require('./routes/seed');
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/seed', seedRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -62,6 +64,7 @@ if (process.env.VERCEL !== '1') {
     console.log(`  - /api/audit-logs`);
     console.log(`  - /api/products`);
     console.log(`  - /api/orders`);
+    console.log(`  - /api/users`);
     console.log(`  - /api/seed (POST to seed database)`);
   });
 }

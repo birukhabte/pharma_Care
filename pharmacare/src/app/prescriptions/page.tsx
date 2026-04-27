@@ -189,21 +189,24 @@ export default function PrescriptionPage() {
       pending: 'bg-amber-100 text-amber-700 border-amber-200',
       dispensed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       partial: 'bg-blue-100 text-blue-700 border-blue-200',
-      cancelled: 'bg-red-100 text-red-700 border-red-200'
+      cancelled: 'bg-red-100 text-red-700 border-red-200',
+      filled: 'bg-green-100 text-green-700 border-green-200'
     };
     
     const icons = {
       pending: <Clock size={12} />,
       dispensed: <CheckCircle size={12} />,
       partial: <AlertCircle size={12} />,
-      cancelled: <XCircle size={12} />
+      cancelled: <XCircle size={12} />,
+      filled: <CheckCircle size={12} />
     };
     
     const labels = {
       pending: 'Pending',
       dispensed: 'Dispensed',
       partial: 'Partial',
-      cancelled: 'Cancelled'
+      cancelled: 'Cancelled',
+      filled: 'Filled'
     };
 
     return (
@@ -248,7 +251,7 @@ export default function PrescriptionPage() {
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              {['All', 'Pending', 'Dispensed', 'Partial', 'Cancelled'].map((status) => (
+              {['All', 'Pending', 'Dispensed', 'Partial', 'Cancelled', 'Filled'].map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}

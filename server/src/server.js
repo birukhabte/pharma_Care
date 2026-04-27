@@ -14,6 +14,7 @@ const stockMovementRoutes = require('./routes/stockMovements');
 const notificationRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
 const auditLogRoutes = require('./routes/auditLogs');
+const customerRoutes = require('./routes/customers');
 
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
@@ -38,10 +39,32 @@ app.use('/api/stock-movements', stockMovementRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/customers', customerRoutes);
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'PharmaCare API Server',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      medicines: '/api/medicines',
+      dashboard: '/api/dashboard',
+      suppliers: '/api/suppliers',
+      prescriptions: '/api/prescriptions',
+      customers: '/api/customers',
+      users: '/api/users',
+      products: '/api/products',
+      orders: '/api/orders'
+    }
+  });
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -62,6 +85,7 @@ if (process.env.VERCEL !== '1') {
     console.log(`  - /api/notifications`);
     console.log(`  - /api/settings`);
     console.log(`  - /api/audit-logs`);
+    console.log(`  - /api/customers`);
     console.log(`  - /api/products`);
     console.log(`  - /api/orders`);
     console.log(`  - /api/users`);

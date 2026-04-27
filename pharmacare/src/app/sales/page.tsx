@@ -58,8 +58,8 @@ const mockPendingOrders: PendingOrder[] = [
     customerName: 'Abebe Kebede',
     customerPhone: '+251-911-234567',
     items: [
-      { id: 'm1', name: 'Paracetamol 500mg', generic: 'Acetaminophen', price: 12.5, stock: 240, category: 'Analgesic', quantity: 2 },
-      { id: 'm2', name: 'Amoxicillin 250mg', generic: 'Amoxicillin', price: 45.0, stock: 120, category: 'Antibiotic', quantity: 1 },
+      { id: 'm1', name: 'Paracetamol 500mg', generic: 'Acetaminophen', price: 12.5, stock: 240, category: 'Analgesic', type: 'medicine', quantity: 2 },
+      { id: 'm2', name: 'Amoxicillin 250mg', generic: 'Amoxicillin', price: 45.0, stock: 120, category: 'Antibiotic', type: 'medicine', quantity: 1 },
     ],
     subtotal: 70.0,
     discount: 0,
@@ -74,7 +74,7 @@ const mockPendingOrders: PendingOrder[] = [
     customerName: 'Meron Tesfaye',
     customerPhone: '+251-911-345678',
     items: [
-      { id: 'm3', name: 'Metformin 500mg', generic: 'Metformin HCl', price: 28.0, stock: 180, category: 'Antidiabetic', quantity: 3 },
+      { id: 'm3', name: 'Metformin 500mg', generic: 'Metformin HCl', price: 28.0, stock: 180, category: 'Antidiabetic', type: 'medicine', quantity: 3 },
     ],
     subtotal: 84.0,
     discount: 8.4,

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaCare - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        #apiTest { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 PharmaCare - System Test</h1>
+        
+        <div class="status success">
+            ✅ Static HTML is working
+        </div>
+        
+        <div class="status info">
+            📡 Testing API connection...
+        </div>
+        
+        <button onclick="testAPI()">Test Backend API</button>
+        <button onclick="testFrontend()">Test Frontend</button>
+        
+        <div id="apiTest"></div>
+        
+        <h2>Quick Links</h2>
+        <ul>
+            <li><a href="http://localhost:5173">Frontend (Next.js)</a></li>
+            <li><a href="http://localhost:5001/api/health">Backend Health Check</a></li>
+        </ul>
+        
+        <h2>System Requirements</h2>
+        <ul>
+            <li>Node.js 18+</li>
+            <li>MongoDB (local or Atlas)</li>
+            <li>Available RAM: 2GB+ recommended</li>
+        </ul>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const testDiv = document.getElementById('apiTest');
+            testDiv.innerHTML = '<div class="status info">Testing backend...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:5001/api/health');
+                const data = await response.json();
+                testDiv.innerHTML = `<div class="status success">✅ Backend is working: ${data.status}</div>`;
+            } catch (error) {
+                testDiv.innerHTML = `<div class="status warning">⚠️ Backend not responding: ${error.message}</div>`;
+            }
+        }
+        
+        function testFrontend() {
+            window.open('http://localhost:5173', '_blank');
+        }
+        
+        // Auto-test API on load
+        setTimeout(testAPI, 1000);
+    </script>
+</body>
+</html>

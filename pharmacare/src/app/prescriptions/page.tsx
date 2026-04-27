@@ -44,6 +44,8 @@ interface Prescription {
   dispensedAt?: string;
 }
 
+type PrescriptionStatus = 'pending' | 'dispensed' | 'partial' | 'cancelled' | 'filled';
+
 const MOCK_PRESCRIPTIONS: Prescription[] = [
   {
     id: 'rx-001',
@@ -184,8 +186,8 @@ export default function PrescriptionPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (status: Prescription['status']) => {
-    const badges = {
+  const getStatusBadge = (status: PrescriptionStatus) => {
+    const badges: Record<PrescriptionStatus, string> = {
       pending: 'bg-amber-100 text-amber-700 border-amber-200',
       dispensed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       partial: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -193,7 +195,7 @@ export default function PrescriptionPage() {
       filled: 'bg-green-100 text-green-700 border-green-200'
     };
     
-    const icons = {
+    const icons: Record<PrescriptionStatus, React.ReactNode> = {
       pending: <Clock size={12} />,
       dispensed: <CheckCircle size={12} />,
       partial: <AlertCircle size={12} />,
@@ -201,7 +203,7 @@ export default function PrescriptionPage() {
       filled: <CheckCircle size={12} />
     };
     
-    const labels = {
+    const labels: Record<PrescriptionStatus, string> = {
       pending: 'Pending',
       dispensed: 'Dispensed',
       partial: 'Partial',
@@ -210,9 +212,9 @@ export default function PrescriptionPage() {
     };
 
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${badges[status]}`}>
-        {icons[status]}
-        {labels[status]}
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${badges[status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+        {icons[status] || <Clock size={12} />}
+        {labels[status] || status}
       </span>
     );
   };

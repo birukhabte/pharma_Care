@@ -70,7 +70,7 @@ export default function InventoryPage() {
   });
 
   // Intersection Observer for lazy loading
-  const observerTarget = React.useRef<HTMLDivElement>(null);
+  const observerTarget = React.useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

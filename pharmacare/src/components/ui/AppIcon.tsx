@@ -1,14 +1,44 @@
 'use client';
 
 import React from 'react';
-import * as HeroIcons from '@heroicons/react/24/outline';
-import * as HeroIconsSolid from '@heroicons/react/24/solid';
-import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  QuestionMarkCircleIcon,
+  HomeIcon,
+  UserIcon,
+  CogIcon,
+  ChartBarIcon,
+  DocumentTextIcon,
+  ShoppingCartIcon,
+  UsersIcon,
+  BuildingStorefrontIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+  BellIcon,
+  ArrowRightOnRectangleIcon
+} from '@heroicons/react/24/outline';
+
+import {
+  HomeIcon as HomeIconSolid,
+  UserIcon as UserIconSolid,
+  CogIcon as CogIconSolid,
+  ChartBarIcon as ChartBarIconSolid,
+  DocumentTextIcon as DocumentTextIconSolid,
+  ShoppingCartIcon as ShoppingCartIconSolid,
+  UsersIcon as UsersIconSolid,
+  BuildingStorefrontIcon as BuildingStorefrontIconSolid,
+  ClipboardDocumentListIcon as ClipboardDocumentListIconSolid,
+  Cog6ToothIcon as Cog6ToothIconSolid
+} from '@heroicons/react/24/solid';
 
 type IconVariant = 'outline' | 'solid';
 
 interface IconProps {
-    name: string; // Changed to string to accept dynamic values
+    name: string;
     variant?: IconVariant;
     size?: number;
     className?: string;
@@ -16,6 +46,41 @@ interface IconProps {
     disabled?: boolean;
     [key: string]: any;
 }
+
+const iconMap = {
+  outline: {
+    'QuestionMarkCircleIcon': QuestionMarkCircleIcon,
+    'HomeIcon': HomeIcon,
+    'UserIcon': UserIcon,
+    'CogIcon': CogIcon,
+    'ChartBarIcon': ChartBarIcon,
+    'DocumentTextIcon': DocumentTextIcon,
+    'ShoppingCartIcon': ShoppingCartIcon,
+    'UsersIcon': UsersIcon,
+    'BuildingStorefrontIcon': BuildingStorefrontIcon,
+    'ClipboardDocumentListIcon': ClipboardDocumentListIcon,
+    'Cog6ToothIcon': Cog6ToothIcon,
+    'PlusIcon': PlusIcon,
+    'PencilIcon': PencilIcon,
+    'TrashIcon': TrashIcon,
+    'EyeIcon': EyeIcon,
+    'MagnifyingGlassIcon': MagnifyingGlassIcon,
+    'BellIcon': BellIcon,
+    'ArrowRightOnRectangleIcon': ArrowRightOnRectangleIcon
+  },
+  solid: {
+    'HomeIcon': HomeIconSolid,
+    'UserIcon': UserIconSolid,
+    'CogIcon': CogIconSolid,
+    'ChartBarIcon': ChartBarIconSolid,
+    'DocumentTextIcon': DocumentTextIconSolid,
+    'ShoppingCartIcon': ShoppingCartIconSolid,
+    'UsersIcon': UsersIconSolid,
+    'BuildingStorefrontIcon': BuildingStorefrontIconSolid,
+    'ClipboardDocumentListIcon': ClipboardDocumentListIconSolid,
+    'Cog6ToothIcon': Cog6ToothIconSolid
+  }
+};
 
 function Icon({
     name,
@@ -26,8 +91,7 @@ function Icon({
     disabled = false,
     ...props
 }: IconProps) {
-    const iconSet = variant === 'solid' ? HeroIconsSolid : HeroIcons;
-    const IconComponent = iconSet[name as keyof typeof iconSet] as React.ComponentType<any>;
+    const IconComponent = iconMap[variant][name as keyof typeof iconMap[typeof variant]];
 
     if (!IconComponent) {
         return (

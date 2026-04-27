@@ -4,6 +4,9 @@
   "scripts": {
     "dev": "next dev -p 5173",
     "dev:light": "NODE_OPTIONS='--max-old-space-size=1024' next dev -p 5173",
+    "dev:minimal": "NODE_OPTIONS='--max-old-space-size=512' next dev -p 5173",
+    "dev:safe": "NODE_OPTIONS='--max-old-space-size=768' next dev -p 5173",
+    "dev:ultra": "NODE_OPTIONS='--max-old-space-size=256' next dev -p 5173",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,9 +16,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@heroicons/react": "^2.1.5",
+    "lucide-react": "^0.460.0",
     "next": "^16.2.2",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.74.0",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",

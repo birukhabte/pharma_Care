@@ -12,7 +12,7 @@ const nextConfig = {
 	// Set the correct root directory
 	experimental: {
 		// Minimal optimizations only
-		optimizePackageImports: ['@heroicons/react'],
+		optimizePackageImports: ['lucide-react'],
 		// Disable heavy features
 		turbo: false,
 		serverComponentsExternalPackages: [],

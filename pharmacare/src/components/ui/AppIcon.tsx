@@ -1,39 +1,7 @@
 'use client';
 
 import React from 'react';
-import { 
-  QuestionMarkCircleIcon,
-  HomeIcon,
-  UserIcon,
-  CogIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
-  ShoppingCartIcon,
-  UsersIcon,
-  BuildingStorefrontIcon,
-  ClipboardDocumentListIcon,
-  Cog6ToothIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  MagnifyingGlassIcon,
-  BellIcon,
-  ArrowRightOnRectangleIcon
-} from '@heroicons/react/24/outline';
-
-import {
-  HomeIcon as HomeIconSolid,
-  UserIcon as UserIconSolid,
-  CogIcon as CogIconSolid,
-  ChartBarIcon as ChartBarIconSolid,
-  DocumentTextIcon as DocumentTextIconSolid,
-  ShoppingCartIcon as ShoppingCartIconSolid,
-  UsersIcon as UsersIconSolid,
-  BuildingStorefrontIcon as BuildingStorefrontIconSolid,
-  ClipboardDocumentListIcon as ClipboardDocumentListIconSolid,
-  Cog6ToothIcon as Cog6ToothIconSolid
-} from '@heroicons/react/24/solid';
+import * as Icons from './Icons';
 
 type IconVariant = 'outline' | 'solid';
 
@@ -47,38 +15,51 @@ interface IconProps {
     [key: string]: any;
 }
 
+// Map of available icons from our Icons component
 const iconMap = {
   outline: {
-    'QuestionMarkCircleIcon': QuestionMarkCircleIcon,
-    'HomeIcon': HomeIcon,
-    'UserIcon': UserIcon,
-    'CogIcon': CogIcon,
-    'ChartBarIcon': ChartBarIcon,
-    'DocumentTextIcon': DocumentTextIcon,
-    'ShoppingCartIcon': ShoppingCartIcon,
-    'UsersIcon': UsersIcon,
-    'BuildingStorefrontIcon': BuildingStorefrontIcon,
-    'ClipboardDocumentListIcon': ClipboardDocumentListIcon,
-    'Cog6ToothIcon': Cog6ToothIcon,
-    'PlusIcon': PlusIcon,
-    'PencilIcon': PencilIcon,
-    'TrashIcon': TrashIcon,
-    'EyeIcon': EyeIcon,
-    'MagnifyingGlassIcon': MagnifyingGlassIcon,
-    'BellIcon': BellIcon,
-    'ArrowRightOnRectangleIcon': ArrowRightOnRectangleIcon
+    'QuestionMarkCircleIcon': Icons.AlertTriangle, // Using AlertTriangle as fallback
+    'HomeIcon': Icons.Home,
+    'UserIcon': Icons.Users,
+    'CogIcon': Icons.Settings,
+    'ChartBarIcon': Icons.Package, // Using Package as chart substitute
+    'DocumentTextIcon': Icons.Package,
+    'ShoppingCartIcon': Icons.Package,
+    'UsersIcon': Icons.Users,
+    'BuildingStorefrontIcon': Icons.Package,
+    'ClipboardDocumentListIcon': Icons.Package,
+    'Cog6ToothIcon': Icons.Settings,
+    'PlusIcon': Icons.Plus,
+    'PencilIcon': Icons.Pencil,
+    'TrashIcon': Icons.Trash2,
+    'EyeIcon': Icons.EyeIcon,
+    'MagnifyingGlassIcon': Icons.SearchIcon,
+    'BellIcon': Icons.Bell,
+    'ArrowRightOnRectangleIcon': Icons.ChevronRight,
+    // Additional common icons
+    'AlertTriangle': Icons.AlertTriangle,
+    'Search': Icons.SearchIcon,
+    'Menu': Icons.Menu,
+    'X': Icons.X,
+    'Check': Icons.Check,
+    'ChevronUp': Icons.ChevronUp,
+    'ChevronDown': Icons.ChevronDown,
+    'ChevronLeft': Icons.ChevronLeft,
+    'ChevronRight': Icons.ChevronRight,
+    'Filter': Icons.Filter,
+    'Package': Icons.Package
   },
   solid: {
-    'HomeIcon': HomeIconSolid,
-    'UserIcon': UserIconSolid,
-    'CogIcon': CogIconSolid,
-    'ChartBarIcon': ChartBarIconSolid,
-    'DocumentTextIcon': DocumentTextIconSolid,
-    'ShoppingCartIcon': ShoppingCartIconSolid,
-    'UsersIcon': UsersIconSolid,
-    'BuildingStorefrontIcon': BuildingStorefrontIconSolid,
-    'ClipboardDocumentListIcon': ClipboardDocumentListIconSolid,
-    'Cog6ToothIcon': Cog6ToothIconSolid
+    'HomeIcon': Icons.Home,
+    'UserIcon': Icons.Users,
+    'CogIcon': Icons.Settings,
+    'ChartBarIcon': Icons.Package,
+    'DocumentTextIcon': Icons.Package,
+    'ShoppingCartIcon': Icons.Package,
+    'UsersIcon': Icons.Users,
+    'BuildingStorefrontIcon': Icons.Package,
+    'ClipboardDocumentListIcon': Icons.Package,
+    'Cog6ToothIcon': Icons.Settings
   }
 };
 
@@ -94,10 +75,10 @@ function Icon({
     const IconComponent = iconMap[variant][name as keyof typeof iconMap[typeof variant]];
 
     if (!IconComponent) {
+        // Fallback to AlertTriangle for unknown icons
         return (
-            <QuestionMarkCircleIcon
-                width={size}
-                height={size}
+            <Icons.AlertTriangle
+                size={size}
                 className={`text-gray-400 ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
                 onClick={disabled ? undefined : onClick}
                 {...props}
@@ -107,8 +88,7 @@ function Icon({
 
     return (
         <IconComponent
-            width={size}
-            height={size}
+            size={size}
             className={`${disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer hover:opacity-80' : ''} ${className}`}
             onClick={disabled ? undefined : onClick}
             {...props}

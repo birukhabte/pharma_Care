@@ -14,7 +14,7 @@ const stockMovementRoutes = require('./routes/stockMovements');
 const notificationRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
 const auditLogRoutes = require('./routes/auditLogs');
-const seedRoutes = require('./routes/seed');
+
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/users');
@@ -38,7 +38,7 @@ app.use('/api/stock-movements', stockMovementRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
-app.use('/api/seed', seedRoutes);
+
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);

@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
+const notificationScheduler = require('./services/notificationScheduler');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -14,7 +15,6 @@ const stockMovementRoutes = require('./routes/stockMovements');
 const notificationRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
 const auditLogRoutes = require('./routes/auditLogs');
-const customerRoutes = require('./routes/customers');
 
 const productRoutes = require('./routes/products');
 const orderRoutes = require('./routes/orders');
@@ -39,7 +39,6 @@ app.use('/api/stock-movements', stockMovementRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
-app.use('/api/customers', customerRoutes);
 
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
@@ -58,7 +57,6 @@ app.get('/', (req, res) => {
       dashboard: '/api/dashboard',
       suppliers: '/api/suppliers',
       prescriptions: '/api/prescriptions',
-      customers: '/api/customers',
       users: '/api/users',
       products: '/api/products',
       orders: '/api/orders'
@@ -85,11 +83,13 @@ if (process.env.VERCEL !== '1') {
     console.log(`  - /api/notifications`);
     console.log(`  - /api/settings`);
     console.log(`  - /api/audit-logs`);
-    console.log(`  - /api/customers`);
     console.log(`  - /api/products`);
     console.log(`  - /api/orders`);
     console.log(`  - /api/users`);
     console.log(`  - /api/seed (POST to seed database)`);
+    
+    // Start notification scheduler
+    notificationScheduler.start();
   });
 }
 

@@ -6,26 +6,48 @@ const authenticate = require('../middleware/auth');
 // Get user notifications
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { read, type, page = 1, limit = 50 } = req.query;
+    const { read, type, category, priority, page = 1, limit = 50 } = req.query;
     
     const query = { userId: req.user.id };
     if (read !== undefined) query.read = read === 'true';
     if (type) query.type = type;
+    if (category) query.category = category;
+    if (priority) query.priority = priority;
 
     const notifications = await Notification.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ priority: -1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
     const count = await Notification.countDocuments(query);
     const unreadCount = await Notification.countDocuments({ userId: req.user.id, read: false });
 
+    // Get counts by category
+    const categoryCounts = await Notification.aggregate([
+      { $match: { userId: req.user.id, read: false } },
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]);
+
+    // Get counts by priority
+    const priorityCounts = await Notification.aggregate([
+      { $match: { userId: req.user.id, read: false } },
+      { $group: { _id: '$priority', count: { $sum: 1 } } }
+    ]);
+
     res.json({
       notifications,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       total: count,
-      unreadCount
+      unreadCount,
+      categoryCounts: categoryCounts.reduce((acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {}),
+      priorityCounts: priorityCounts.reduce((acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {})
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -78,6 +100,52 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
 
     res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete all read notifications
+router.delete('/read/all', authenticate, async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({
+      userId: req.user.id,
+      read: true
+    });
+
+    res.json({ 
+      message: 'All read notifications deleted successfully',
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get notification statistics
+router.get('/stats', authenticate, async (req, res) => {
+  try {
+    const stats = await Notification.aggregate([
+      { $match: { userId: req.user.id } },
+      {
+        $facet: {
+          byCategory: [
+            { $group: { _id: '$category', total: { $sum: 1 }, unread: { $sum: { $cond: ['$read', 0, 1] } } } }
+          ],
+          byPriority: [
+            { $group: { _id: '$priority', total: { $sum: 1 }, unread: { $sum: { $cond: ['$read', 0, 1] } } } }
+          ],
+          byType: [
+            { $group: { _id: '$type', total: { $sum: 1 }, unread: { $sum: { $cond: ['$read', 0, 1] } } } }
+          ],
+          overall: [
+            { $group: { _id: null, total: { $sum: 1 }, unread: { $sum: { $cond: ['$read', 0, 1] } } } }
+          ]
+        }
+      }
+    ]);
+
+    res.json(stats[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const authMiddleware = require('../middleware/auth');
 const Medicine = require('../models/Medicine');
+const notificationService = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     // Use lean() for faster queries and select only needed fields
     const medicines = await Medicine.find(query)
-      .select('name genericName category manufacturer stock reorderLevel unitPrice costPrice supplier status dosageForm strength hsnCode gstRate schedule createdAt')
+      .select('name genericName category manufacturer stockQty reorderLevel unitPrice costPrice supplier status dosageForm strength hsnCode gstRate schedule productionDate expiryDate createdAt updatedAt')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .lean()
@@ -56,16 +57,14 @@ router.post(
   authMiddleware,
   [
     body('name').notEmpty().withMessage('Medicine name is required'),
-    body('genericName').notEmpty().withMessage('Generic name is required'),
+    body('genericName').optional(),
     body('category').notEmpty().withMessage('Category is required'),
-    body('unitPrice').isFloat({ min: 0 }).withMessage('Valid unit price is required'),
-    body('costPrice').isFloat({ min: 0 }).withMessage('Valid cost price is required'),
-    body('productionDate').notEmpty().withMessage('Production date is required')
-      .isISO8601().withMessage('Production date must be a valid date'),
-    body('expiryDate').notEmpty().withMessage('Expiry date is required')
-      .isISO8601().withMessage('Expiry date must be a valid date')
+    body('unitPrice').optional().isFloat({ min: 0 }).withMessage('Valid unit price is required'),
+    body('costPrice').optional().isFloat({ min: 0 }).withMessage('Valid cost price is required'),
+    body('productionDate').optional().isISO8601().withMessage('Production date must be a valid date'),
+    body('expiryDate').optional().isISO8601().withMessage('Expiry date must be a valid date')
       .custom((value, { req }) => {
-        if (new Date(value) <= new Date(req.body.productionDate)) {
+        if (value && req.body.productionDate && new Date(value) <= new Date(req.body.productionDate)) {
           throw new Error('Expiry date must be after production date');
         }
         return true;
@@ -90,6 +89,8 @@ router.post(
 
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
+    const oldMedicine = await Medicine.findById(req.params.id);
+    
     const medicine = await Medicine.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -98,6 +99,20 @@ router.put('/:id', authMiddleware, async (req, res) => {
     
     if (!medicine) {
       return res.status(404).json({ error: 'Medicine not found' });
+    }
+
+    // Check for stock level changes and trigger notifications
+    if (oldMedicine && oldMedicine.stockQty !== medicine.stockQty) {
+      if (medicine.stockQty === 0) {
+        await notificationService.notifyOutOfStock(medicine);
+      } else if (medicine.stockQty <= medicine.reorderLevel && oldMedicine.stockQty > medicine.reorderLevel) {
+        await notificationService.notifyLowStock(medicine);
+      }
+    }
+
+    // Check for price changes
+    if (oldMedicine && oldMedicine.unitPrice !== medicine.unitPrice) {
+      await notificationService.notifyPriceChange(medicine, oldMedicine.unitPrice, medicine.unitPrice);
     }
     
     res.json(medicine);
@@ -108,6 +123,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
 router.patch('/:id', authMiddleware, async (req, res) => {
   try {
+    const oldMedicine = await Medicine.findById(req.params.id);
+    
     const medicine = await Medicine.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -116,6 +133,20 @@ router.patch('/:id', authMiddleware, async (req, res) => {
     
     if (!medicine) {
       return res.status(404).json({ error: 'Medicine not found' });
+    }
+
+    // Check for stock level changes and trigger notifications
+    if (oldMedicine && oldMedicine.stockQty !== medicine.stockQty) {
+      if (medicine.stockQty === 0) {
+        await notificationService.notifyOutOfStock(medicine);
+      } else if (medicine.stockQty <= medicine.reorderLevel && oldMedicine.stockQty > medicine.reorderLevel) {
+        await notificationService.notifyLowStock(medicine);
+      }
+    }
+
+    // Check for price changes
+    if (oldMedicine && oldMedicine.unitPrice !== medicine.unitPrice) {
+      await notificationService.notifyPriceChange(medicine, oldMedicine.unitPrice, medicine.unitPrice);
     }
     
     res.json(medicine);

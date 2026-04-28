@@ -7,7 +7,8 @@ const medicineSchema = new mongoose.Schema({
   },
   genericName: {
     type: String,
-    required: true
+    required: false,
+    default: ''
   },
   category: {
     type: String,
@@ -15,7 +16,8 @@ const medicineSchema = new mongoose.Schema({
   },
   manufacturer: {
     type: String,
-    required: true
+    required: false,
+    default: 'Unknown'
   },
   batchCount: {
     type: Number,
@@ -28,19 +30,23 @@ const medicineSchema = new mongoose.Schema({
   },
   reorderLevel: {
     type: Number,
-    required: true
+    required: false,
+    default: 10
   },
   unitPrice: {
     type: Number,
-    required: true
+    required: false,
+    default: 0
   },
   costPrice: {
     type: Number,
-    required: true
+    required: false,
+    default: 0
   },
   supplier: {
     type: String,
-    required: true
+    required: false,
+    default: 'Unknown'
   },
   status: {
     type: String,
@@ -49,11 +55,13 @@ const medicineSchema = new mongoose.Schema({
   },
   dosageForm: {
     type: String,
-    required: true
+    required: false,
+    default: 'Tablet'
   },
   strength: {
     type: String,
-    required: true
+    required: false,
+    default: 'N/A'
   },
   hsnCode: {
     type: String

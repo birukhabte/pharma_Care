@@ -14,6 +14,9 @@ router.get('/metrics', authMiddleware, async (req, res) => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
     // Get today's completed orders
     const todayOrders = await Order.find({ 
       status: 'completed',
@@ -49,8 +52,48 @@ router.get('/metrics', authMiddleware, async (req, res) => {
       ? ((avgOrderValue - yesterdayAvgOrderValue) / yesterdayAvgOrderValue) * 100
       : 0;
 
+    // Low stock medicines (stock < 100 or below reorder level)
     const lowStockMedicines = await Medicine.countDocuments({
-      $expr: { $lt: ['$stockQty', '$reorderLevel'] }
+      $or: [
+        { stockQty: { $lt: 100 } },
+        { $expr: { $lt: ['$stockQty', '$reorderLevel'] } }
+      ]
+    });
+
+    // Medicines expiring this month
+    const expiringThisMonth = await Medicine.countDocuments({
+      expiryDate: {
+        $gte: startOfMonth,
+        $lte: endOfMonth
+      }
+    });
+
+    // Medicines expiring within 7 days (critical)
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    
+    const expiringCritical = await Medicine.countDocuments({
+      expiryDate: {
+        $gte: today,
+        $lte: sevenDaysFromNow
+      }
+    });
+
+    // Get total employees (users)
+    const User = require('../models/User');
+    const totalEmployees = await User.countDocuments({ status: 'active' });
+
+    // Get recent notifications count
+    const Notification = require('../models/Notification');
+    const recentNotifications = await Notification.countDocuments({
+      read: false,
+      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+    });
+
+    const urgentNotifications = await Notification.countDocuments({
+      read: false,
+      priority: 'high',
+      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     });
 
     res.json({
@@ -61,7 +104,12 @@ router.get('/metrics', authMiddleware, async (req, res) => {
       avgOrderValue: avgOrderValue.toFixed(2),
       avgOrderValueChange: parseFloat(avgOrderValueChange.toFixed(1)),
       lowStockItems: lowStockMedicines,
-      lowStockItemsChange: 0
+      lowStockItemsChange: 0, // Can be calculated if needed
+      expiringThisMonth,
+      expiringCritical,
+      totalEmployees,
+      recentNotifications,
+      urgentNotifications
     });
   } catch (error) {
     console.error('Dashboard metrics error:', error);
@@ -116,25 +164,42 @@ router.get('/recent-sales', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/expiry-alerts', authMiddleware, (req, res) => {
-  res.json([
-    {
-      id: 'alert-001',
-      medicineName: 'Azithromycin 500mg',
-      batchNo: 'AZ2024-03',
-      expiryDate: '2026-05-15',
-      stockQty: 48,
-      daysUntilExpiry: 43
-    },
-    {
-      id: 'alert-002',
-      medicineName: 'Pantoprazole 40mg',
-      batchNo: 'PZ2024-01',
-      expiryDate: '2026-06-20',
-      stockQty: 120,
-      daysUntilExpiry: 79
-    }
-  ]);
+router.get('/expiry-alerts', authMiddleware, async (req, res) => {
+  try {
+    // Get medicines with stock less than 100 or below reorder level
+    const lowStockMedicines = await Medicine.find({
+      $or: [
+        { stockQty: { $lt: 100 } },
+        { $expr: { $lt: ['$stockQty', '$reorderLevel'] } }
+      ]
+    })
+    .select('name stockQty reorderLevel expiryDate category')
+    .sort({ stockQty: 1 }) // Sort by lowest stock first
+    .limit(20); // Limit to 20 alerts
+
+    const alerts = lowStockMedicines.map(medicine => {
+      const daysUntilExpiry = medicine.expiryDate 
+        ? Math.ceil((new Date(medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
+        : null;
+
+      return {
+        id: medicine._id,
+        medicineName: medicine.name,
+        batchNo: 'N/A', // Can be added if batch tracking is implemented
+        expiryDate: medicine.expiryDate ? new Date(medicine.expiryDate).toISOString().split('T')[0] : null,
+        stockQty: medicine.stockQty,
+        reorderLevel: medicine.reorderLevel,
+        category: medicine.category,
+        daysUntilExpiry: daysUntilExpiry,
+        alertType: medicine.stockQty < 100 ? 'low-stock' : 'reorder-level'
+      };
+    });
+
+    res.json(alerts);
+  } catch (error) {
+    console.error('Expiry alerts error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

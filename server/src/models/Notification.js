@@ -8,11 +8,22 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['info', 'warning', 'alert', 'success', 'error']
+    enum: ['info', 'warning', 'alert', 'success', 'error', 'urgent']
   },
   category: {
     type: String,
-    enum: ['stock', 'expiry', 'sale', 'order', 'system', 'other'],
+    enum: [
+      'inventory',      // Low stock, out of stock, overstock
+      'expiry',         // Near expiry, expired medicines
+      'purchase',       // Purchase orders, supplier notifications
+      'sales',          // Sales summaries, large transactions
+      'user',           // User account changes, role changes
+      'payment',        // Payment received, pending payments
+      'system',         // System errors, backups, database warnings
+      'security',       // Login alerts, unauthorized access
+      'return',         // Returns, damaged inventory, adjustments
+      'other'
+    ],
     default: 'other'
   },
   title: {
@@ -31,8 +42,12 @@ const notificationSchema = new mongoose.Schema({
   readAt: Date,
   priority: {
     type: String,
-    enum: ['low', 'medium', 'high'],
+    enum: ['low', 'medium', 'high', 'urgent'],
     default: 'medium'
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   },
   expiresAt: Date
 }, {

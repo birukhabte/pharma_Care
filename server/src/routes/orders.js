@@ -225,6 +225,123 @@ router.post('/:id/complete', authenticate, async (req, res) => {
     if (order.status !== 'pending') {
       return res.status(400).json({ message: 'Order is not pending' });
     }
+
+    // Update inventory stock for each item in the order
+    const Medicine = require('../models/Medicine');
+    const Product = require('../models/Product');
+    const Notification = require('../models/Notification');
+    
+    console.log(`📦 Completing order ${order.orderNumber} with ${order.items.length} items`);
+    
+    for (const item of order.items) {
+      console.log(`🔍 Processing item: ${item.name} (ID: ${item.medicineId}), Quantity: ${item.quantity}`);
+      
+      // Try to find in medicines first
+      let medicine = await Medicine.findById(item.medicineId);
+      
+      if (medicine) {
+        console.log(`✅ Found medicine: ${medicine.name}, Current stock: ${medicine.stockQty}`);
+        
+        // Update medicine stock
+        if (medicine.stockQty < item.quantity) {
+          console.log(`❌ Insufficient stock for ${item.name}`);
+          return res.status(400).json({ 
+            message: `Insufficient stock for ${item.name}. Available: ${medicine.stockQty}, Required: ${item.quantity}` 
+          });
+        }
+        
+        medicine.stockQty -= item.quantity;
+        
+        // Update status based on new stock level
+        if (medicine.stockQty === 0) {
+          medicine.status = 'out_of_stock';
+        } else if (medicine.stockQty <= medicine.reorderLevel) {
+          medicine.status = 'low_stock';
+        }
+        
+        await medicine.save();
+        console.log(`✅ Updated medicine stock: ${item.name}, new stock: ${medicine.stockQty}`);
+        
+        // Create notification if stock is below 100
+        if (medicine.stockQty < 100) {
+          const existingNotification = await Notification.findOne({
+            category: 'stock',
+            title: `Low Stock: ${medicine.name}`,
+            read: false
+          });
+          
+          // Only create notification if one doesn't already exist
+          if (!existingNotification) {
+            await Notification.create({
+              type: medicine.stockQty === 0 ? 'error' : medicine.stockQty < medicine.reorderLevel ? 'alert' : 'warning',
+              category: 'stock',
+              title: `Low Stock: ${medicine.name}`,
+              message: `${medicine.name} stock is now ${medicine.stockQty} units. ${medicine.stockQty < medicine.reorderLevel ? 'Below reorder level!' : 'Please restock soon.'}`,
+              priority: medicine.stockQty < medicine.reorderLevel ? 'high' : 'medium',
+              link: '/inventory'
+            });
+            console.log(`📢 Created low stock notification for ${medicine.name}`);
+          }
+        }
+      } else {
+        console.log(`⚠️ Not found in medicines, checking products...`);
+        
+        // Try to find in products
+        let product = await Product.findById(item.medicineId);
+        
+        if (product) {
+          console.log(`✅ Found product: ${product.name}, Current stock: ${product.currentStock}`);
+          
+          // Update product stock
+          if (product.currentStock < item.quantity) {
+            console.log(`❌ Insufficient stock for ${item.name}`);
+            return res.status(400).json({ 
+              message: `Insufficient stock for ${item.name}. Available: ${product.currentStock}, Required: ${item.quantity}` 
+            });
+          }
+          
+          product.currentStock -= item.quantity;
+          
+          // Update status based on new stock level
+          if (product.currentStock === 0) {
+            product.status = 'out-of-stock';
+          } else if (product.currentStock <= product.minStock) {
+            product.status = 'low-stock';
+          } else if (product.currentStock > product.maxStock) {
+            product.status = 'overstocked';
+          } else {
+            product.status = 'in-stock';
+          }
+          
+          await product.save();
+          console.log(`✅ Updated product stock: ${item.name}, new stock: ${product.currentStock}`);
+          
+          // Create notification if stock is below 100
+          if (product.currentStock < 100) {
+            const existingNotification = await Notification.findOne({
+              category: 'stock',
+              title: `Low Stock: ${product.name}`,
+              read: false
+            });
+            
+            // Only create notification if one doesn't already exist
+            if (!existingNotification) {
+              await Notification.create({
+                type: product.currentStock === 0 ? 'error' : product.currentStock < product.minStock ? 'alert' : 'warning',
+                category: 'stock',
+                title: `Low Stock: ${product.name}`,
+                message: `${product.name} stock is now ${product.currentStock} units. ${product.currentStock < product.minStock ? 'Below minimum level!' : 'Please restock soon.'}`,
+                priority: product.currentStock < product.minStock ? 'high' : 'medium',
+                link: '/inventory'
+              });
+              console.log(`📢 Created low stock notification for ${product.name}`);
+            }
+          }
+        } else {
+          console.warn(`⚠️ Item not found in inventory: ${item.name} (${item.medicineId})`);
+        }
+      }
+    }
     
     order.status = 'completed';
     order.completedBy = req.user.fullName;
@@ -236,10 +353,11 @@ router.post('/:id/complete', authenticate, async (req, res) => {
     await order.save();
     
     res.json({
-      message: 'Order completed successfully',
+      message: 'Order completed successfully and inventory updated',
       order
     });
   } catch (error) {
+    console.error('❌ Error completing order:', error);
     res.status(400).json({ message: error.message });
   }
 });

@@ -26,7 +26,10 @@ class NotificationService {
   // Create notification for all users with specific roles
   async createNotificationForRoles({ roles, type, category, title, message, link, priority = 'medium', metadata = {} }) {
     try {
+      console.log(`🔔 Creating notifications for roles: ${roles.join(', ')}`);
       const users = await User.find({ role: { $in: roles } }).select('_id');
+      console.log(`🔔 Found ${users.length} users with roles: ${roles.join(', ')}`);
+      
       const notifications = users.map(user => ({
         userId: user._id,
         type,
@@ -40,10 +43,13 @@ class NotificationService {
       
       if (notifications.length > 0) {
         await Notification.insertMany(notifications);
+        console.log(`✅ Created ${notifications.length} notifications: ${title}`);
+      } else {
+        console.warn(`⚠️ No users found for roles: ${roles.join(', ')}`);
       }
       return notifications.length;
     } catch (error) {
-      console.error('Error creating notifications for roles:', error);
+      console.error('❌ Error creating notifications for roles:', error);
       throw error;
     }
   }

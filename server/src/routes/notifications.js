@@ -6,6 +6,7 @@ const authenticate = require('../middleware/auth');
 // Get user notifications
 router.get('/', authenticate, async (req, res) => {
   try {
+    console.log(`📬 Fetching notifications for user: ${req.user.id} (${req.user.fullName})`);
     const { read, type, category, priority, page = 1, limit = 50 } = req.query;
     
     const query = { userId: req.user.id };
@@ -21,6 +22,8 @@ router.get('/', authenticate, async (req, res) => {
 
     const count = await Notification.countDocuments(query);
     const unreadCount = await Notification.countDocuments({ userId: req.user.id, read: false });
+
+    console.log(`📬 Found ${notifications.length} notifications, ${unreadCount} unread for user ${req.user.fullName}`);
 
     // Get counts by category
     const categoryCounts = await Notification.aggregate([
@@ -50,6 +53,7 @@ router.get('/', authenticate, async (req, res) => {
       }, {})
     });
   } catch (error) {
+    console.error('❌ Error fetching notifications:', error);
     res.status(500).json({ message: error.message });
   }
 });

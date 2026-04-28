@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const authenticate = require('../middleware/auth');
+const notificationService = require('../services/notificationService');
 
 // Get all pending orders (for cashier)
 router.get('/pending', authenticate, async (req, res) => {
@@ -233,6 +234,9 @@ router.post('/:id/complete', authenticate, async (req, res) => {
     
     console.log(`📦 Completing order ${order.orderNumber} with ${order.items.length} items`);
     
+    const soldItems = []; // Track items sold for notification
+    const soldOutItems = []; // Track items that are now sold out
+    
     for (const item of order.items) {
       console.log(`🔍 Processing item: ${item.name} (ID: ${item.medicineId}), Quantity: ${item.quantity}`);
       
@@ -250,11 +254,20 @@ router.post('/:id/complete', authenticate, async (req, res) => {
           });
         }
         
+        const oldStock = medicine.stockQty;
         medicine.stockQty -= item.quantity;
+        
+        // Track sold item
+        soldItems.push({
+          name: medicine.name,
+          quantity: item.quantity,
+          newStock: medicine.stockQty
+        });
         
         // Update status based on new stock level
         if (medicine.stockQty === 0) {
           medicine.status = 'out_of_stock';
+          soldOutItems.push(medicine.name);
         } else if (medicine.stockQty <= medicine.reorderLevel) {
           medicine.status = 'low_stock';
         }
@@ -262,26 +275,15 @@ router.post('/:id/complete', authenticate, async (req, res) => {
         await medicine.save();
         console.log(`✅ Updated medicine stock: ${item.name}, new stock: ${medicine.stockQty}`);
         
-        // Create notification if stock is below 100
-        if (medicine.stockQty < 100) {
-          const existingNotification = await Notification.findOne({
-            category: 'stock',
-            title: `Low Stock: ${medicine.name}`,
-            read: false
-          });
-          
-          // Only create notification if one doesn't already exist
-          if (!existingNotification) {
-            await Notification.create({
-              type: medicine.stockQty === 0 ? 'error' : medicine.stockQty < medicine.reorderLevel ? 'alert' : 'warning',
-              category: 'stock',
-              title: `Low Stock: ${medicine.name}`,
-              message: `${medicine.name} stock is now ${medicine.stockQty} units. ${medicine.stockQty < medicine.reorderLevel ? 'Below reorder level!' : 'Please restock soon.'}`,
-              priority: medicine.stockQty < medicine.reorderLevel ? 'high' : 'medium',
-              link: '/inventory'
-            });
-            console.log(`📢 Created low stock notification for ${medicine.name}`);
+        // Send notifications using notification service
+        try {
+          if (medicine.stockQty === 0 && oldStock > 0) {
+            await notificationService.notifyOutOfStock(medicine);
+          } else if (medicine.stockQty <= medicine.reorderLevel && oldStock > medicine.reorderLevel) {
+            await notificationService.notifyLowStock(medicine);
           }
+        } catch (notifError) {
+          console.error('⚠️ Error sending stock notification:', notifError);
         }
       } else {
         console.log(`⚠️ Not found in medicines, checking products...`);
@@ -300,11 +302,20 @@ router.post('/:id/complete', authenticate, async (req, res) => {
             });
           }
           
+          const oldStock = product.currentStock;
           product.currentStock -= item.quantity;
+          
+          // Track sold item
+          soldItems.push({
+            name: product.name,
+            quantity: item.quantity,
+            newStock: product.currentStock
+          });
           
           // Update status based on new stock level
           if (product.currentStock === 0) {
             product.status = 'out-of-stock';
+            soldOutItems.push(product.name);
           } else if (product.currentStock <= product.minStock) {
             product.status = 'low-stock';
           } else if (product.currentStock > product.maxStock) {
@@ -316,26 +327,28 @@ router.post('/:id/complete', authenticate, async (req, res) => {
           await product.save();
           console.log(`✅ Updated product stock: ${item.name}, new stock: ${product.currentStock}`);
           
-          // Create notification if stock is below 100
-          if (product.currentStock < 100) {
-            const existingNotification = await Notification.findOne({
-              category: 'stock',
-              title: `Low Stock: ${product.name}`,
-              read: false
-            });
-            
-            // Only create notification if one doesn't already exist
-            if (!existingNotification) {
-              await Notification.create({
-                type: product.currentStock === 0 ? 'error' : product.currentStock < product.minStock ? 'alert' : 'warning',
-                category: 'stock',
-                title: `Low Stock: ${product.name}`,
-                message: `${product.name} stock is now ${product.currentStock} units. ${product.currentStock < product.minStock ? 'Below minimum level!' : 'Please restock soon.'}`,
-                priority: product.currentStock < product.minStock ? 'high' : 'medium',
-                link: '/inventory'
+          // Send notifications using notification service
+          try {
+            if (product.currentStock === 0 && oldStock > 0) {
+              // Create out of stock notification for product
+              await notificationService.notifyOutOfStock({
+                _id: product._id,
+                name: product.name,
+                strength: '',
+                stockQty: product.currentStock
               });
-              console.log(`📢 Created low stock notification for ${product.name}`);
+            } else if (product.currentStock <= product.minStock && oldStock > product.minStock) {
+              // Create low stock notification for product
+              await notificationService.notifyLowStock({
+                _id: product._id,
+                name: product.name,
+                strength: '',
+                stockQty: product.currentStock,
+                reorderLevel: product.minStock
+              });
             }
+          } catch (notifError) {
+            console.error('⚠️ Error sending stock notification:', notifError);
           }
         } else {
           console.warn(`⚠️ Item not found in inventory: ${item.name} (${item.medicineId})`);
@@ -351,6 +364,67 @@ router.post('/:id/complete', authenticate, async (req, res) => {
     order.change = change;
     
     await order.save();
+
+    // Send sale completion notification to admin
+    try {
+      // Create a detailed message about items sold
+      const itemsSummary = soldItems.map(item => 
+        `${item.name} (${item.quantity} units, ${item.newStock} remaining)`
+      ).join(', ');
+
+      // Send payment received notification
+      await notificationService.notifyPaymentReceived({
+        _id: order._id,
+        amount: `ETB ${order.total.toFixed(2)}`,
+        invoiceNumber: order.orderNumber,
+        saleId: order._id
+      });
+
+      // Send notification about items sold
+      await notificationService.createNotificationForRoles({
+        roles: ['admin'],
+        type: 'info',
+        category: 'sales',
+        title: `Sale Completed - ${order.orderNumber}`,
+        message: `${req.user.fullName} completed sale: ${itemsSummary}`,
+        link: `/sales`,
+        priority: 'medium',
+        metadata: { 
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          soldItems,
+          completedBy: req.user.fullName
+        }
+      });
+
+      // If items are sold out, send special notification
+      if (soldOutItems.length > 0) {
+        await notificationService.createNotificationForRoles({
+          roles: ['admin', 'pharmacist'],
+          type: 'urgent',
+          category: 'inventory',
+          title: `Items Sold Out`,
+          message: `The following items are now out of stock: ${soldOutItems.join(', ')}`,
+          link: '/inventory',
+          priority: 'urgent',
+          metadata: { soldOutItems, orderId: order._id }
+        });
+      }
+
+      // If it's a large transaction (over 1000), send special notification
+      if (order.total >= 1000) {
+        await notificationService.notifyLargeTransaction({
+          _id: order._id,
+          totalAmount: `ETB ${order.total.toFixed(2)}`,
+          invoiceNumber: order.orderNumber
+        });
+      }
+
+      console.log(`✅ Sale notifications sent for order ${order.orderNumber}`);
+    } catch (notifError) {
+      console.error('⚠️ Error sending sale notifications:', notifError);
+      // Don't fail the order completion if notification fails
+    }
     
     res.json({
       message: 'Order completed successfully and inventory updated',
@@ -358,6 +432,18 @@ router.post('/:id/complete', authenticate, async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error completing order:', error);
+    
+    // Send failed transaction notification
+    try {
+      await notificationService.notifyFailedTransaction({
+        orderId: req.params.id,
+        reason: error.message,
+        timestamp: new Date()
+      });
+    } catch (notifError) {
+      console.error('⚠️ Error sending failed transaction notification:', notifError);
+    }
+    
     res.status(400).json({ message: error.message });
   }
 });
@@ -376,7 +462,22 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
     }
     
     order.status = 'cancelled';
+    order.cancelledBy = req.user.fullName;
+    order.cancelledAt = new Date();
     await order.save();
+
+    // Send cancelled transaction notification
+    try {
+      await notificationService.notifyFailedTransaction({
+        orderId: order._id,
+        invoiceNumber: order.orderNumber,
+        reason: 'Order cancelled by user',
+        cancelledBy: req.user.fullName,
+        timestamp: new Date()
+      });
+    } catch (notifError) {
+      console.error('⚠️ Error sending cancellation notification:', notifError);
+    }
     
     res.json({
       message: 'Order cancelled successfully',

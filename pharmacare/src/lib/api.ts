@@ -24,6 +24,39 @@ class ApiClient {
     return response.json();
   }
 
+  // Generic HTTP methods
+  async get(endpoint: string) {
+    return this.request(endpoint, { method: 'GET' });
+  }
+
+  async post(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async put(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async patch(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete(endpoint: string, data?: any) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   // Auth
   async login(email: string, password: string) {
     const data = await this.request('/auth/login', {
@@ -327,6 +360,48 @@ class ApiClient {
     return this.request(`/users/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Notifications
+  async getNotifications(params?: { read?: boolean; type?: string; category?: string; priority?: string; page?: number; limit?: number }) {
+    const queryParams = new URLSearchParams();
+    if (params?.read !== undefined) queryParams.append('read', String(params.read));
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.category) queryParams.append('category', params.category);
+    if (params?.priority) queryParams.append('priority', params.priority);
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    
+    const query = queryParams.toString();
+    return this.request(`/notifications${query ? `?${query}` : ''}`);
+  }
+
+  async markNotificationAsRead(id: string) {
+    return this.request(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  }
+
+  async deleteNotification(id: string) {
+    return this.request(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteAllReadNotifications() {
+    return this.request('/notifications/read/all', {
+      method: 'DELETE',
+    });
+  }
+
+  async getNotificationStats() {
+    return this.request('/notifications/stats');
   }
 }
 

@@ -261,7 +261,7 @@ export default function SuppliersPage() {
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium">Total Suppliers</p>
-              <p className="text-2xl font-bold text-slate-800">{suppliersData.length}</p>
+              <p className="text-2xl font-bold text-slate-800">{suppliers.length}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">

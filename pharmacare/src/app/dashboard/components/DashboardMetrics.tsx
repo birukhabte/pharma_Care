@@ -208,9 +208,13 @@ export default function DashboardMetrics() {
       {/* Expiring Batches */}
       <MetricCard
         title="Expiring This Month"
-        value="14"
+        value={String(metrics?.expiringThisMonth || 0)}
         subtitle="Batches expiring within 30 days"
-        trend={{ value: '3 critical', direction: 'down', label: 'Expiring within 7 days' }}
+        trend={{ 
+          value: `${metrics?.expiringCritical || 0} critical`, 
+          direction: (metrics?.expiringCritical || 0) > 0 ? 'down' : 'neutral', 
+          label: 'Expiring within 7 days' 
+        }}
         icon={<Clock size={20} />}
         variant="warning"
       />
@@ -232,9 +236,8 @@ export default function DashboardMetrics() {
       {/* Total Employees */}
       <MetricCard
         title="Total Employees"
-        value="24"
+        value={String(metrics?.totalEmployees || 0)}
         subtitle="Active staff members"
-        trend={{ value: '+2', direction: 'up', label: 'New hires this month' }}
         icon={<Pill size={20} />}
         variant="default"
       />
@@ -242,11 +245,11 @@ export default function DashboardMetrics() {
       {/* Recent Notifications */}
       <MetricCard
         title="Recent Notifications"
-        value="8"
+        value={String(metrics?.recentNotifications || 0)}
         subtitle="Unread alerts and messages"
         trend={{ 
-          value: '3 urgent', 
-          direction: 'down', 
+          value: `${metrics?.urgentNotifications || 0} urgent`, 
+          direction: (metrics?.urgentNotifications || 0) > 0 ? 'down' : 'neutral', 
           label: 'Requires immediate attention' 
         }}
         icon={<TrendingUp size={20} />}

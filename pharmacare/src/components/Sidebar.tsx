@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import AppLogo from '@/components/ui/AppLogo';
 import { getUserRole, canRead, ROLE_LABELS } from '@/lib/permissions';
 import { api } from '@/lib/api';
-import { LayoutDashboard, Pill, ShoppingCart, BarChart3, Package, Users, Settings, ChevronLeft, ChevronRight, LogOut, Truck, ClipboardList, UserCog } from 'lucide-react';
+import { LayoutDashboard, Pill, ShoppingCart, BarChart3, Package, Users, Settings, ChevronLeft, ChevronRight, LogOut, Truck, ClipboardList, UserCog, Bell } from 'lucide-react';
 
 interface NavItem {
   id: string;
@@ -64,6 +64,14 @@ const navItems: NavItem[] = [
     group: 'main',
     resource: 'prescriptions',
     requiredRoles: ['admin', 'pharmacist'],
+  },
+  {
+    id: 'nav-notifications',
+    label: 'Notifications',
+    href: '/notifications',
+    icon: <Bell size={22} strokeWidth={2.5} />,
+    group: 'main',
+    resource: 'notifications',
   },
   {
     id: 'nav-reports',

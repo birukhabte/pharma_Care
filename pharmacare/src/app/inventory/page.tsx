@@ -67,6 +67,9 @@ export default function InventoryPage() {
     maxStock: '',
     unit: '',
     location: '',
+    productionDate: '',
+    expiryDate: '',
+    price: '',
   });
 
   // Intersection Observer for lazy loading
@@ -201,26 +204,39 @@ export default function InventoryPage() {
     setLoading(true);
     
     try {
-      const itemData = {
-        name: formData.name,
-        category: formData.category,
-        sku: formData.sku,
-        currentStock: parseInt(formData.currentStock),
-        minStock: parseInt(formData.minStock),
-        maxStock: parseInt(formData.maxStock),
-        unit: formData.unit,
-        location: formData.location,
-      };
-
       if (activeTab === 'medicine') {
-        // For medicines, use medicine API
+        // For medicines, use medicine API with proper field mapping
+        const price = parseFloat(formData.price) || 0;
         await api.createMedicine({
-          ...itemData,
-          stock: itemData.currentStock,
+          name: formData.name,
+          genericName: formData.name, // Use name as generic name if not provided
+          category: formData.category,
+          manufacturer: 'Unknown',
+          supplier: 'Unknown',
+          stockQty: parseInt(formData.currentStock),
+          reorderLevel: parseInt(formData.minStock),
+          unitPrice: price,
+          costPrice: price * 0.7, // Assume 30% markup
+          dosageForm: formData.unit || 'Tablet',
+          strength: 'N/A',
+          hsnCode: formData.sku,
+          productionDate: formData.productionDate || undefined,
+          expiryDate: formData.expiryDate || undefined,
         });
         await loadMedicines();
       } else {
         // For products, use product API
+        const itemData = {
+          name: formData.name,
+          category: formData.category,
+          sku: formData.sku,
+          currentStock: parseInt(formData.currentStock),
+          minStock: parseInt(formData.minStock),
+          maxStock: parseInt(formData.maxStock),
+          unit: formData.unit,
+          location: formData.location,
+          price: parseFloat(formData.price) || 0,
+        };
         await api.createProduct(itemData);
         await loadProducts();
       }
@@ -235,6 +251,9 @@ export default function InventoryPage() {
         maxStock: '',
         unit: '',
         location: '',
+        productionDate: '',
+        expiryDate: '',
+        price: '',
       });
       setShowAddModal(false);
     } catch (error) {
@@ -771,6 +790,23 @@ export default function InventoryPage() {
                   />
                 </div>
 
+                {/* Price in Birr */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Price (Birr) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  />
+                </div>
+
                 {/* Location */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -785,6 +821,36 @@ export default function InventoryPage() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                   />
                 </div>
+
+                {/* Production Date and Expiry Date - Only for Medicines */}
+                {activeTab === 'medicine' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Production Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.productionDate}
+                        onChange={(e) => setFormData({ ...formData, productionDate: e.target.value })}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Expiry Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.expiryDate}
+                        onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                        min={formData.productionDate || undefined}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Modal Footer */}

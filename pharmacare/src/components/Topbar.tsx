@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, memo } from 'react';
-import { Bell, Search, Menu, X, ChevronDown, LogOut } from 'lucide-react';
+import { Bell, Search, Menu, X, ChevronDown, LogOut, AlertCircle, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
@@ -10,43 +10,26 @@ interface TopbarProps {
   mobileMenuOpen?: boolean;
 }
 
-const notifications = [
-  {
-    id: 'notif-001',
-    type: 'warning',
-    message: 'Amoxicillin 500mg batch expiring in 12 days',
-    time: '10m ago',
-    read: false,
-  },
-  {
-    id: 'notif-002',
-    type: 'alert',
-    message: 'Metformin 850mg stock below reorder level (8 units)',
-    time: '42m ago',
-    read: false,
-  },
-  {
-    id: 'notif-003',
-    type: 'info',
-    message: 'Daily sales report for Apr 1 is ready',
-    time: '2h ago',
-    read: true,
-  },
-  {
-    id: 'notif-004',
-    type: 'warning',
-    message: 'Atorvastatin 20mg — 3 batches expiring this month',
-    time: '5h ago',
-    read: true,
-  },
-];
+interface Notification {
+  _id: string;
+  type: 'info' | 'warning' | 'alert' | 'success' | 'error' | 'urgent';
+  category: string;
+  title: string;
+  message: string;
+  link?: string;
+  read: boolean;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  createdAt: string;
+}
 
 const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: TopbarProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Load user data on mount
   useEffect(() => {
@@ -57,6 +40,99 @@ const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: Topb
       }
     }
   }, []);
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getNotifications({ limit: 10 });
+      setNotifications(response.notifications || []);
+      setUnreadCount(response.unreadCount || 0);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch notifications on mount and when notification panel opens
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await api.markNotificationAsRead(notificationId);
+      setNotifications(prev =>
+        prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      await api.markAllNotificationsAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.read) {
+      markAsRead(notification._id);
+    }
+    if (notification.link) {
+      router.push(notification.link);
+      setNotifOpen(false);
+    }
+  };
+
+  // Get notification icon based on type
+  const getNotificationIcon = (type: string, priority: string) => {
+    const iconClass = priority === 'urgent' ? 'text-red-600' : 
+                      type === 'error' ? 'text-red-500' :
+                      type === 'warning' ? 'text-amber-500' :
+                      type === 'success' ? 'text-green-500' :
+                      'text-teal-500';
+    
+    if (type === 'urgent' || type === 'error') return <XCircle size={16} className={iconClass} />;
+    if (type === 'warning') return <AlertTriangle size={16} className={iconClass} />;
+    if (type === 'success') return <CheckCircle size={16} className={iconClass} />;
+    return <Info size={16} className={iconClass} />;
+  };
+
+  // Get time ago string
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
+  // Get priority badge color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-700';
+      case 'high': return 'bg-orange-100 text-orange-700';
+      case 'medium': return 'bg-yellow-100 text-yellow-700';
+      default: return 'bg-blue-100 text-blue-700';
+    }
+  };
 
   const handleLogout = () => {
     api.logout();
@@ -120,49 +196,94 @@ const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: Topb
           >
             <Bell size={18} className="text-white" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
             )}
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-modal animate-fade-in z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
-                {unreadCount > 0 && (
-                  <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
-                    {unreadCount} new
-                  </span>
-                )}
-              </div>
-              <ul className="divide-y divide-slate-50 max-h-72 overflow-y-auto scrollbar-thin">
-                {notifications.map((n) => (
-                  <li
-                    key={n.id}
-                    className={`px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${
-                      !n.read ? 'bg-teal-50/40' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                          n.type === 'alert' ?'bg-red-500'
-                            : n.type === 'warning' ?'bg-amber-500' :'bg-teal-500'
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setNotifOpen(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-slate-200 rounded-xl shadow-modal animate-fade-in z-50">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                  <h3 className="text-sm font-semibold text-slate-800">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <>
+                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
+                          {unreadCount} new
+                        </span>
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                        >
+                          Mark all read
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                {loading ? (
+                  <div className="px-4 py-8 text-center text-slate-500 text-sm">
+                    Loading notifications...
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-slate-500 text-sm">
+                    No notifications yet
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-50 max-h-96 overflow-y-auto scrollbar-thin">
+                    {notifications.map((n) => (
+                      <li
+                        key={n._id}
+                        onClick={() => handleNotificationClick(n)}
+                        className={`px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${
+                          !n.read ? 'bg-teal-50/40' : ''
                         }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-700 leading-relaxed">{n.message}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{n.time}</p>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-                <button className="text-xs text-teal-600 font-medium hover:text-teal-700 transition-colors">
-                  View all notifications
-                </button>
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5">
+                            {getNotificationIcon(n.type, n.priority)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <p className="text-xs font-semibold text-slate-800">{n.title}</p>
+                              {n.priority === 'urgent' && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getPriorityColor(n.priority)}`}>
+                                  URGENT
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-600 leading-relaxed mb-1">{n.message}</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs text-slate-400">{getTimeAgo(n.createdAt)}</p>
+                              <span className="text-[10px] text-slate-400 uppercase">{n.category}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                <div className="px-4 py-2.5 border-t border-slate-100 text-center">
+                  <button 
+                    onClick={() => {
+                      router.push('/notifications');
+                      setNotifOpen(false);
+                    }}
+                    className="text-xs text-teal-600 font-medium hover:text-teal-700 transition-colors"
+                  >
+                    View all notifications
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 

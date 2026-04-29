@@ -25,7 +25,19 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
-app.use(cors());
+// Configure CORS to allow frontend
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',  // Vite dev server
+    'https://your-vercel-app.vercel.app',
+    'https://your-custom-domain.com'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Register routes

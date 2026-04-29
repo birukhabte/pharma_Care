@@ -8,15 +8,18 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "src/server.js"
-    },
-    {
       "src": "/(.*)",
       "dest": "src/server.js"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "crons": [
+    {
+      "path": "/api/cron/check-inventory",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/check-expiry",
+      "schedule": "0 8,18 * * *"
+    }
+  ]
 }

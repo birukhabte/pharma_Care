@@ -14,14 +14,24 @@ class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    const response = await fetch(url, { ...options, headers });
+    try {
+      const response = await fetch(url, { ...options, headers });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('API Request Failed:', {
+        url,
+        endpoint,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        API_BASE_URL
+      });
+      throw error;
     }
-
-    return response.json();
   }
 
   // Generic HTTP methods

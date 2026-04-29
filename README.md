@@ -1,20 +1,24 @@
 # PharmaCare - Pharmacy Management System
 
-Full-stack pharmacy management application with Next.js frontend and Node.js/Express backend.
+A comprehensive, full-stack pharmacy management application built with Next.js and Node.js/Express, featuring real-time notifications, role-based access control, and advanced inventory management.
 
-## Screenshots
+## 📸 Screenshots
 
 ### Login Screen
-![Login](pharmacare/public/assets/images/login.png)
+![Login Screen](./pharmacare/public/assets/readme%20/pharmalogin.png)
+*Beautiful, modern login interface with demo credentials for quick access*
 
 ### Dashboard
-![Dashboard](pharmacare/public/assets/images/dashboard.png)
+![Dashboard](./pharmacare/public/assets/readme%20/pharmadashboard.png)
+*Real-time metrics, sales trends, and expiry alerts at a glance*
 
 ### Sales Management
-![Sales](pharmacare/public/assets/images/sales.png)
+![Sales Management](./pharmacare/public/assets/readme%20/pharmasales.png)
+*Streamlined point-of-sale with order management and payment processing*
 
 ### Inventory Management
-![Inventory](pharmacare/public/assets/images/inventory.png)
+![Inventory](./pharmacare/public/assets/readme%20/pharmainventory.png)
+*Complete medicine inventory with batch tracking and expiry monitoring*
 
 ## Project Structure
 

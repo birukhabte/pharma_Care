@@ -30,9 +30,33 @@ type ExportFormat = 'pdf' | 'excel' | 'csv';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState<DateRange>('7d');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [reportType, setReportType] = useState<ReportType>('sales');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    if (range === 'custom') {
+      setShowCustomDatePicker(true);
+      // Set default custom dates
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 7);
+      setCustomStartDate(start.toISOString().split('T')[0]);
+      setCustomEndDate(end.toISOString().split('T')[0]);
+    } else {
+      setShowCustomDatePicker(false);
+    }
+  };
+
+  const applyCustomDateRange = () => {
+    if (customStartDate && customEndDate) {
+      setShowCustomDatePicker(false);
+    }
+  };
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     setIsGenerating(true);
@@ -52,13 +76,42 @@ export default function ReportsPage() {
   }, []);
 
   const renderReportContent = () => {
+    // Calculate date range for child components
+    const getDateRange = () => {
+      if (dateRange === 'custom' && customStartDate && customEndDate) {
+        return { startDate: customStartDate, endDate: customEndDate };
+      }
+      
+      const endDate = new Date();
+      const startDate = new Date();
+      
+      switch (dateRange) {
+        case '7d':
+          startDate.setDate(endDate.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(endDate.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(endDate.getDate() - 90);
+          break;
+      }
+      
+      return {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
+      };
+    };
+
+    const dateRangeData = getDateRange();
+
     switch (reportType) {
       case 'sales':
-        return <SalesReports />;
+        return <SalesReports dateRange={dateRangeData} />;
       case 'inventory':
-        return <InventoryReports />;
+        return <InventoryReports dateRange={dateRangeData} />;
       case 'expiry':
-        return <ExpiryReports />;
+        return <ExpiryReports dateRange={dateRangeData} />;
       case 'purchase':
         return <PurchaseReports />;
       case 'staff':
@@ -68,7 +121,7 @@ export default function ReportsPage() {
       case 'audit':
         return <AuditReports />;
       default:
-        return <SalesReports />;
+        return <SalesReports dateRange={dateRangeData} />;
     }
   };
 
@@ -290,31 +343,80 @@ export default function ReportsPage() {
 
         {/* Date Range Filter */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-card p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} className="text-slate-400" />
-              <span className="text-sm font-medium text-slate-600">Period:</span>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-slate-400" />
+                <span className="text-sm font-medium text-slate-600">Period:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: '7d', label: 'Last 7 Days' },
+                  { value: '30d', label: 'Last 30 Days' },
+                  { value: '90d', label: 'Last 90 Days' },
+                  { value: 'custom', label: 'Custom Range' }
+                ].map((range) => (
+                  <button
+                    key={range.value}
+                    onClick={() => handleDateRangeChange(range.value as DateRange)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      dateRange === range.value
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-1">
-              {[
-                { value: '7d', label: 'Last 7 Days' },
-                { value: '30d', label: 'Last 30 Days' },
-                { value: '90d', label: 'Last 90 Days' },
-                { value: 'custom', label: 'Custom Range' }
-              ].map((range) => (
+
+            {/* Custom Date Range Picker */}
+            {showCustomDatePicker && (
+              <div className="flex flex-wrap items-end gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    max={customEndDate || new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    min={customStartDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
                 <button
-                  key={range.value}
-                  onClick={() => setDateRange(range.value as DateRange)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    dateRange === range.value
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  onClick={applyCustomDateRange}
+                  disabled={!customStartDate || !customEndDate}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {range.label}
+                  Apply
                 </button>
-              ))}
-            </div>
+                <button
+                  onClick={() => {
+                    setShowCustomDatePicker(false);
+                    setDateRange('7d');
+                  }}
+                  className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

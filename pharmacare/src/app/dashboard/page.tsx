@@ -11,15 +11,17 @@ export default function DashboardPage() {
   const [currentDateTime, setCurrentDateTime] = useState('');
   const [mounted, setMounted] = useState(false);
   const [userName, setUserName] = useState('User');
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     setMounted(true);
     
-    // Get user name from localStorage
+    // Get user name and role from localStorage
     const user = localStorage.getItem('user');
     if (user) {
       const userData = JSON.parse(user);
       setUserName(userData.fullName || 'User');
+      setUserRole(userData.role || '');
     }
     
     const updateDateTime = () => {
@@ -44,6 +46,11 @@ export default function DashboardPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Role-based access control
+  const canViewSales = ['admin', 'pharmacist', 'cashier'].includes(userRole);
+  const canViewInventory = ['admin', 'pharmacist', 'inventory_manager'].includes(userRole);
+  const canViewMetrics = ['admin', 'pharmacist'].includes(userRole);
 
   return (
     <AppLayout>
@@ -93,18 +100,37 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI Bento Grid */}
-        <DashboardMetrics />
+        {/* KPI Bento Grid - Only for admin and pharmacist */}
+        {canViewMetrics && <DashboardMetrics />}
 
         {/* Bottom row: Recent sales + expiry alerts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
-            <RecentSalesTable />
-          </div>
-          <div>
-            <ExpiryAlertList />
-          </div>
+          {canViewSales && (
+            <div className="xl:col-span-2">
+              <RecentSalesTable />
+            </div>
+          )}
+          {canViewInventory && (
+            <div className={canViewSales ? '' : 'xl:col-span-3'}>
+              <ExpiryAlertList />
+            </div>
+          )}
         </div>
+
+        {/* Access Restricted Message */}
+        {!canViewMetrics && !canViewSales && !canViewInventory && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-card p-12 text-center">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bell size={32} className="text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">
+              Limited Dashboard Access
+            </h3>
+            <p className="text-slate-500 max-w-md mx-auto">
+              Your role has limited access to dashboard features. Contact your administrator for more information.
+            </p>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -58,8 +58,14 @@ interface SalesAnalytics {
   cashierPerformance: CashierPerformance[];
 }
 
-export default function SalesReports() {
-  const [viewType, setViewType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+interface SalesReportsProps {
+  dateRange?: {
+    startDate: string;
+    endDate: string;
+  };
+}
+
+export default function SalesReports({ dateRange: propDateRange }: SalesReportsProps) {
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [analytics, setAnalytics] = useState<SalesAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,33 +73,21 @@ export default function SalesReports() {
 
   // Load sales analytics
   useEffect(() => {
-    loadSalesAnalytics();
-  }, [viewType]);
+    if (propDateRange) {
+      loadSalesAnalytics();
+    }
+  }, [propDateRange]);
 
   const loadSalesAnalytics = async () => {
+    if (!propDateRange) return;
+    
     try {
       setLoading(true);
       setError(null);
       
-      // Calculate date range based on view type
-      const endDate = new Date();
-      const startDate = new Date();
-      
-      switch (viewType) {
-        case 'daily':
-          startDate.setDate(endDate.getDate() - 7); // Last 7 days
-          break;
-        case 'weekly':
-          startDate.setDate(endDate.getDate() - 30); // Last 30 days
-          break;
-        case 'monthly':
-          startDate.setDate(endDate.getDate() - 90); // Last 90 days
-          break;
-      }
-      
       const response = await api.getSalesAnalytics({
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: propDateRange.startDate,
+        endDate: propDateRange.endDate,
         groupBy: 'day'
       });
       
@@ -274,31 +268,36 @@ export default function SalesReports() {
             <h3 className="text-lg font-semibold text-slate-800">Sales Trend</h3>
             <p className="text-sm text-slate-500">Revenue performance over time</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex bg-slate-100 rounded-lg p-1">
-              {['daily', 'weekly', 'monthly'].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setViewType(type as any)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${
-                    viewType === type
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={loadSalesAnalytics}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Refresh data"
-            >
-              <RefreshCw size={16} className="text-slate-600" />
-            </button>
-          </div>
+          <button
+            onClick={loadSalesAnalytics}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            title="Refresh data"
+          >
+            <RefreshCw size={16} className="text-slate-600" />
+          </button>
         </div>
+
+        {/* Date Range Display */}
+        {analytics && (
+          <div className="text-sm text-slate-500 mb-4">
+            Showing data from{' '}
+            <span className="font-medium text-slate-700">
+              {new Date(analytics.summary.dateRange.start).toLocaleDateString('en-ET', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </span>
+            {' '}to{' '}
+            <span className="font-medium text-slate-700">
+              {new Date(analytics.summary.dateRange.end).toLocaleDateString('en-ET', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </span>
+          </div>
+        )}
 
         {/* Chart Visualization */}
         <div className="space-y-4">

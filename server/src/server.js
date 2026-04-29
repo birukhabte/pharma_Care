@@ -30,8 +30,9 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',  // Vite dev server
-    'https://your-vercel-app.vercel.app',
-    'https://your-custom-domain.com'
+    'https://pharmacare.vercel.app',  // Replace with your actual Vercel URL
+    'https://pharmacare-git-main-yourname.vercel.app',  // Vercel preview URLs
+    /\.vercel\.app$/  // Allow all Vercel preview deployments
   ],
   credentials: true,
   optionsSuccessStatus: 200

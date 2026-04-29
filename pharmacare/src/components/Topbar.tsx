@@ -358,9 +358,4 @@ const Topbar = memo(function Topbar({ onMobileMenuToggle, mobileMenuOpen }: Topb
 });
 
 export default Topbar;
-// Commit on 2024-06-6 at 16:42
-// Commit on 2024-06-8 at 9:41
-// Commit on 2024-06-12 at 18:56
-// Commit on 2024-06-12 at 9:54
-// Commit on 2024-06-21 at 18:24
-// Commit on 2024-06-30 at 12:50
+// Updated: 2026-04-29 - Real-time notifications with backend integration

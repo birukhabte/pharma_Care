@@ -16,7 +16,7 @@ router.get('/', authenticate, async (req, res) => {
     if (priority) query.priority = priority;
 
     const notifications = await Notification.find(query)
-      .sort({ priority: -1, createdAt: -1 })
+      .sort({ createdAt: -1 })  // Sort by newest first
       .limit(limit * 1)
       .skip((page - 1) * limit);
 

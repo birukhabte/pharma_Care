@@ -201,6 +201,36 @@ router.post('/', authenticate, async (req, res) => {
     await order.save();
     
     console.log('✅ Order created successfully:', order.orderNumber);
+
+    // Notify cashiers about the new pending order
+    try {
+      const itemsSummary = items.slice(0, 3).map(item => item.name).join(', ');
+      const moreItems = items.length > 3 ? ` and ${items.length - 3} more` : '';
+      
+      await notificationService.createNotificationForRoles({
+        roles: ['cashier'],
+        type: 'info',
+        category: 'sales',
+        title: 'New Order Ready for Payment',
+        message: `${req.user.fullName} created order ${order.orderNumber} for ${customerName}. Items: ${itemsSummary}${moreItems}. Total: ETB ${total.toFixed(2)}`,
+        link: `/sales`,
+        priority: 'high',
+        metadata: {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          customerName,
+          total,
+          itemCount: items.length,
+          createdBy: req.user.fullName,
+          createdByRole: req.user.role
+        }
+      });
+      
+      console.log(`✅ Notification sent to cashiers for order ${order.orderNumber}`);
+    } catch (notifError) {
+      console.error('⚠️ Error sending order notification to cashiers:', notifError);
+      // Don't fail the order creation if notification fails
+    }
     
     res.status(201).json({
       message: 'Order created successfully',

@@ -27,13 +27,24 @@ connectDB();
 
 // Configure CORS to allow frontend
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',  // Vite dev server
-    'https://pharmacare.vercel.app',  // Replace with your actual Vercel URL
-    'https://pharmacare-git-main-yourname.vercel.app',  // Vercel preview URLs
-    /\.vercel\.app$/  // Allow all Vercel preview deployments
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5001',
+    ];
+    
+    // Check if origin is in allowed list or matches Vercel pattern
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
